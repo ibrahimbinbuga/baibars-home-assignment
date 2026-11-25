@@ -9,5 +9,6 @@ namespace Fleet.Api.Realtime;
 public interface IFleetBroadcaster
 {
     Task VehicleUpdatedAsync(VehicleDto vehicle, CancellationToken cancellationToken);
-    Task ActivityRaisedAsync(ActivityEventDto activityEvent, CancellationToken cancellationToken);
+    /// <param name="fleetId">Fleet of the event's vehicle; decides who receives it.</param>
+    Task ActivityRaisedAsync(Guid fleetId, ActivityEventDto activityEvent, CancellationToken cancellationToken);
 }

@@ -1,6 +1,6 @@
 using System.Text;
-using System.Text.Json.Serialization;
 using Fleet.Api.Auth;
+using Fleet.Api.Common;
 using Fleet.Api.Data;
 using Fleet.Api.Realtime;
 using Fleet.Api.Telemetry;
@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddControllers()
-    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+    .AddJsonOptions(o => JsonConfiguration.Apply(o.JsonSerializerOptions));
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -65,6 +65,22 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
             RoleClaimType = AuthClaims.Role,
             ClockSkew = TimeSpan.FromSeconds(30),
         };
+        bearer.Events = new JwtBearerEvents
+        {
+            // WebSocket clients (incl. the mobile SignalR client) can't always send an Authorization header, so they
+            // pass the token as ?access_token=. Accept that ONLY for the hub path: everywhere else a token must be in
+            // the header, so tokens don't end up in URLs (and logs) for normal REST calls.
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"].ToString();
+                if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments(FleetHub.Path))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            },
+        };
     });
 
 // Every endpoint requires a logged-in user unless it explicitly opts out with [AllowAnonymous].
@@ -87,7 +103,9 @@ builder.Services.AddScoped<TelemetryIngestionService>();
 builder.Services.AddScoped<OfflineDetector>();
 builder.Services.AddHostedService<OfflineDetectorService>();
 builder.Services.AddScoped<FleetChangePublisher>();
-builder.Services.AddSingleton<IFleetBroadcaster, NoOpFleetBroadcaster>();
+builder.Services.AddSignalR().AddJsonProtocol(o => JsonConfiguration.Apply(o.PayloadSerializerOptions));
+builder.Services.AddSingleton<SignalRFleetBroadcaster>();
+builder.Services.AddSingleton<IFleetBroadcaster>(services => services.GetRequiredService<SignalRFleetBroadcaster>());
 
 builder.Services.AddHealthChecks().AddDbContextCheck<FleetDbContext>();
 
@@ -111,6 +129,9 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapControllers();
+// CloseOnAuthenticationExpiration: the connection is closed when the JWT it was opened with expires, instead of
+// staying open (and receiving data) indefinitely. The app then reconnects, which requires a valid token.
+app.MapHub<FleetHub>(FleetHub.Path, options => options.CloseOnAuthenticationExpiration = true);
 // Anonymous so the simulator and container tooling can reach it without a token.
 app.MapHealthChecks("/health").AllowAnonymous();
 

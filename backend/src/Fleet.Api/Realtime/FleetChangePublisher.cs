@@ -29,7 +29,7 @@ public class FleetChangePublisher(
             foreach (var e in events)
             {
                 await broadcaster.ActivityRaisedAsync(
-                    new ActivityEventDto(e.Id, e.VehicleId, e.Type, e.OccurredAt, e.Details), cancellationToken);
+                    vehicle.FleetId, new ActivityEventDto(e.Id, e.VehicleId, e.Type, e.OccurredAt, e.Details), cancellationToken);
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
