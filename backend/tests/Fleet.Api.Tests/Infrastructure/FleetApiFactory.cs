@@ -8,6 +8,14 @@ namespace Fleet.Api.Tests.Infrastructure;
 /// <summary>
 /// Runs the real API against a real Postgres in a container (no in-memory database).
 /// One instance is shared by all test classes in the "api" collection, so the container starts once per test run.
+/// Tests in one collection run one after another, so they can safely change shared rows if they restore them.
+///
+/// Test data rules (keep count assertions stable):
+/// - The seeded data (2 fleets, 8 vehicles, 3 users) is never deleted. Operator tests assert "exactly 4, all own
+///   fleet"; admin tests assert "contains all 8 seeded" (not "exactly 8").
+/// - History tests write TelemetryRecord/ActivityEvent rows for one seeded vehicle and clear them first (TestData).
+/// - Vehicles created by tests (Phase 3 onwards) go into a separate test-only fleet that no operator is assigned to,
+///   so operator counts never change.
 /// </summary>
 public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
