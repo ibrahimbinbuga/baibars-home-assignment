@@ -40,6 +40,20 @@ services:
       db:
         condition: service_healthy
 
+  simulator:
+    build:
+      context: ./backend
+      dockerfile: src/Fleet.Simulator/Dockerfile
+    environment:
+      Simulator__ApiBaseUrl: http://api:8080
+      Simulator__DevicesFile: /config/devices.json
+    volumes:
+      # Plaintext demo device keys (the API only stores their hashes).
+      - ./config/devices.json:/config/devices.json:ro
+    # The simulator waits for GET /health itself, so "started" is enough here.
+    depends_on:
+      - api
+
 volumes:
   # Named volume: data survives `docker compose down` (only `down -v` deletes it).
   pgdata:
