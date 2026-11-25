@@ -70,6 +70,7 @@ builder.Services.AddLoginRateLimiting(builder.Configuration);
 builder.Services.AddScoped<JwtTokenIssuer>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IVehicleAccessService, VehicleAccessService>();
+builder.Services.AddScoped<VehicleQueryService>();
 
 builder.Services.AddHealthChecks().AddDbContextCheck<FleetDbContext>();
 

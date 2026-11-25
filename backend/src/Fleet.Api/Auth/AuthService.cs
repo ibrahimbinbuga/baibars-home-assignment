@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Fleet.Api.Auth;
 
-public class AuthService(FleetDbContext db, JwtTokenIssuer tokenIssuer, IVehicleAccessService accessService)
+public class AuthService(FleetDbContext db, JwtTokenIssuer tokenIssuer, VehicleQueryService vehicleQueries)
 {
     public const int BcryptWorkFactor = 11;
 
@@ -47,14 +47,7 @@ public class AuthService(FleetDbContext db, JwtTokenIssuer tokenIssuer, IVehicle
             return null;
         }
 
-        var fleetIds = await accessService.GetAccessibleFleetIdsAsync(principal, cancellationToken);
-        var fleets = await db.Fleets
-            .AsNoTracking()
-            .Where(f => fleetIds.Contains(f.Id))
-            .OrderBy(f => f.Name)
-            .Select(f => new FleetDto(f.Id, f.Name, f.Region))
-            .ToListAsync(cancellationToken);
-
+        var fleets = await vehicleQueries.ListFleetsAsync(principal, cancellationToken);
         return new MeResponse(UserDto.From(user), fleets);
     }
 }

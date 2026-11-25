@@ -48,8 +48,8 @@ namespace Fleet.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("VehicleId", "OccurredAt")
-                        .IsDescending(false, true);
+                    b.HasIndex("VehicleId", "OccurredAt", "Id")
+                        .IsDescending(false, true, true);
 
                     b.ToTable("ActivityEvents", (string)null);
                 });

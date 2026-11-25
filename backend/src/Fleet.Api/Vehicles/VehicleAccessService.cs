@@ -23,4 +23,7 @@ public class VehicleAccessService(FleetDbContext db) : IVehicleAccessService
             .Select(a => a.FleetId)
             .ToListAsync(cancellationToken);
     }
+
+    public IQueryable<Vehicle> ScopeVehicles(IQueryable<Vehicle> query, IReadOnlyList<Guid> fleetIds) =>
+        query.Where(v => fleetIds.Contains(v.FleetId));
 }
