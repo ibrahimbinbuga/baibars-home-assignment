@@ -11,7 +11,8 @@ public class VehicleAccessService(FleetDbContext db) : IVehicleAccessService
     public async Task<IReadOnlyList<Guid>> GetAccessibleFleetIdsAsync(
         ClaimsPrincipal user, CancellationToken cancellationToken)
     {
-        // The role comes from the token. A role change therefore applies at the next login (tokens live 60 minutes).
+        // The role claim is the user's current role from the database (set in CurrentUserValidation on every
+        // request), so a role change applies on the next request.
         if (user.IsInRole(nameof(Role.Admin)))
         {
             return await db.Fleets.Select(f => f.Id).ToListAsync(cancellationToken);

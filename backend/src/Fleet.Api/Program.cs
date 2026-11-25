@@ -80,6 +80,8 @@ builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationSc
 
                 return Task.CompletedTask;
             },
+            // The user must still exist; their role comes from the database (see CurrentUserValidation).
+            OnTokenValidated = CurrentUserValidation.OnTokenValidatedAsync,
         };
     });
 
