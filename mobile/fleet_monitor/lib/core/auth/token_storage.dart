@@ -8,23 +8,27 @@ import '../json.dart';
 
 /// What is kept between app launches. The user is stored too, so the app can restore without a network call.
 class StoredSession {
-  const StoredSession({required this.accessToken, required this.expiresAt, required this.user});
+  const StoredSession({
+    required this.accessToken,
+    required this.expiresAt,
+    required this.user,
+  });
 
   final String accessToken;
   final DateTime expiresAt;
   final UserInfo user;
 
   Map<String, Object?> toJson() => {
-        'accessToken': accessToken,
-        'expiresAt': expiresAt.toUtc().toIso8601String(),
-        'user': user.toJson(),
-      };
+    'accessToken': accessToken,
+    'expiresAt': expiresAt.toUtc().toIso8601String(),
+    'user': user.toJson(),
+  };
 
   factory StoredSession.fromJson(Map<String, dynamic> json) => StoredSession(
-        accessToken: readString(json, 'accessToken'),
-        expiresAt: readDate(json, 'expiresAt'),
-        user: UserInfo.fromJson(asJsonMap(json['user'])),
-      );
+    accessToken: readString(json, 'accessToken'),
+    expiresAt: readDate(json, 'expiresAt'),
+    user: UserInfo.fromJson(asJsonMap(json['user'])),
+  );
 }
 
 abstract interface class TokenStorage {
@@ -54,10 +58,13 @@ class SecureTokenStorage implements TokenStorage {
   }
 
   @override
-  Future<void> write(StoredSession session) => _storage.write(key: _key, value: jsonEncode(session.toJson()));
+  Future<void> write(StoredSession session) =>
+      _storage.write(key: _key, value: jsonEncode(session.toJson()));
 
   @override
   Future<void> clear() => _storage.delete(key: _key);
 }
 
-final tokenStorageProvider = Provider<TokenStorage>((ref) => SecureTokenStorage(const FlutterSecureStorage()));
+final tokenStorageProvider = Provider<TokenStorage>(
+  (ref) => SecureTokenStorage(const FlutterSecureStorage()),
+);

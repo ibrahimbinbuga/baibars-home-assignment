@@ -31,8 +31,12 @@ class AppConfig {
       );
     }
     final uri = Uri.tryParse(value);
-    if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https') || uri.host.isEmpty) {
-      throw ConfigException('API_BASE_URL "$value" is not a valid http(s) URL.');
+    if (uri == null ||
+        !(uri.scheme == 'http' || uri.scheme == 'https') ||
+        uri.host.isEmpty) {
+      throw ConfigException(
+        'API_BASE_URL "$value" is not a valid http(s) URL.',
+      );
     }
     return AppConfig(apiBaseUrl: uri);
   }
@@ -40,5 +44,7 @@ class AppConfig {
 
 /// Overridden in main() with the parsed configuration.
 final appConfigProvider = Provider<AppConfig>(
-  (ref) => throw UnimplementedError('appConfigProvider must be overridden in main()'),
+  (ref) => throw UnimplementedError(
+    'appConfigProvider must be overridden in main()',
+  ),
 );

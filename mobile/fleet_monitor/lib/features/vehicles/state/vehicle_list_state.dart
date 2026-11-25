@@ -27,7 +27,8 @@ class VehicleListState {
     final current = {for (final v in vehicles) v.id: v};
     return VehicleListState([
       for (final fromSnapshot in snapshot)
-        if (current[fromSnapshot.id] case final existing? when existing.isNewerThan(fromSnapshot))
+        if (current[fromSnapshot.id] case final existing?
+            when existing.isNewerThan(fromSnapshot))
           existing
         else
           fromSnapshot,

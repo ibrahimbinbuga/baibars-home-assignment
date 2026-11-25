@@ -8,8 +8,8 @@ class Fleet {
   final String region;
 
   factory Fleet.fromJson(Map<String, dynamic> json) => Fleet(
-        id: readString(json, 'id'),
-        name: readString(json, 'name'),
-        region: readString(json, 'region'),
-      );
+    id: readString(json, 'id'),
+    name: readString(json, 'name'),
+    region: readString(json, 'region'),
+  );
 }

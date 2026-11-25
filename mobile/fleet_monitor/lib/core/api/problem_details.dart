@@ -1,6 +1,11 @@
 /// RFC 7807 error body returned by the API (application/problem+json).
 class ProblemDetails {
-  const ProblemDetails({this.status, this.title, this.detail, this.errors = const {}});
+  const ProblemDetails({
+    this.status,
+    this.title,
+    this.detail,
+    this.errors = const {},
+  });
 
   final int? status;
   final String? title;

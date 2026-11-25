@@ -16,7 +16,9 @@ class VehicleListNotifier extends AsyncNotifier<VehicleListState> {
   /// Pull-to-refresh / reconnect. Throws ApiException on failure and keeps the current list.
   Future<void> refresh() async {
     final snapshot = await ref.read(vehiclesRepositoryProvider).list();
-    state = AsyncData((state.value ?? VehicleListState.empty).mergeSnapshot(snapshot));
+    state = AsyncData(
+      (state.value ?? VehicleListState.empty).mergeSnapshot(snapshot),
+    );
   }
 
   /// A live VehicleUpdated (Phase 6). Ignored if older than what we have.
@@ -26,4 +28,7 @@ class VehicleListNotifier extends AsyncNotifier<VehicleListState> {
   }
 }
 
-final vehicleListProvider = AsyncNotifierProvider<VehicleListNotifier, VehicleListState>(VehicleListNotifier.new);
+final vehicleListProvider =
+    AsyncNotifierProvider<VehicleListNotifier, VehicleListState>(
+      VehicleListNotifier.new,
+    );

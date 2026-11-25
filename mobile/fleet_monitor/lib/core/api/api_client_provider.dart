@@ -15,6 +15,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
       Authenticated(:final accessToken) => accessToken,
       _ => null,
     },
-    onUnauthorized: () => ref.read(authProvider.notifier).logout(LogoutReason.unauthorized),
+    onUnauthorized: () =>
+        ref.read(authProvider.notifier).logout(LogoutReason.unauthorized),
   );
 });

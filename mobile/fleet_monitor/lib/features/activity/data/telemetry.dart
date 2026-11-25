@@ -27,21 +27,25 @@ class TelemetryPoint {
   final VehicleState state;
 
   factory TelemetryPoint.fromJson(Map<String, dynamic> json) => TelemetryPoint(
-        sequence: readInt(json, 'sequence'),
-        recordedAt: readDate(json, 'recordedAt'),
-        receivedAt: readDate(json, 'receivedAt'),
-        latitude: readDouble(json, 'latitude'),
-        longitude: readDouble(json, 'longitude'),
-        speedKmh: readDouble(json, 'speedKmh'),
-        headingDeg: readDouble(json, 'headingDeg'),
-        batteryPct: readDouble(json, 'batteryPct'),
-        state: readEnum(json, 'state', VehicleState.values, VehicleState.unknown),
-      );
+    sequence: readInt(json, 'sequence'),
+    recordedAt: readDate(json, 'recordedAt'),
+    receivedAt: readDate(json, 'receivedAt'),
+    latitude: readDouble(json, 'latitude'),
+    longitude: readDouble(json, 'longitude'),
+    speedKmh: readDouble(json, 'speedKmh'),
+    headingDeg: readDouble(json, 'headingDeg'),
+    batteryPct: readDouble(json, 'batteryPct'),
+    state: readEnum(json, 'state', VehicleState.values, VehicleState.unknown),
+  );
 }
 
 /// History window. [from]/[to] are the window the server actually applied (after its defaults).
 class TelemetryResponse {
-  const TelemetryResponse({required this.from, required this.to, required this.items});
+  const TelemetryResponse({
+    required this.from,
+    required this.to,
+    required this.items,
+  });
 
   final DateTime from;
   final DateTime to;
@@ -49,9 +53,12 @@ class TelemetryResponse {
   /// Newest first.
   final List<TelemetryPoint> items;
 
-  factory TelemetryResponse.fromJson(Map<String, dynamic> json) => TelemetryResponse(
+  factory TelemetryResponse.fromJson(Map<String, dynamic> json) =>
+      TelemetryResponse(
         from: readDate(json, 'from'),
         to: readDate(json, 'to'),
-        items: asJsonList(json['items']).map((e) => TelemetryPoint.fromJson(asJsonMap(e))).toList(growable: false),
+        items: asJsonList(json['items'])
+            .map((e) => TelemetryPoint.fromJson(asJsonMap(e)))
+            .toList(growable: false),
       );
 }

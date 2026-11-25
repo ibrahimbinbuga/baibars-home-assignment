@@ -10,10 +10,13 @@ class FleetsRepository {
 
   final ApiClient _api;
 
-  Future<List<Fleet>> list() => _api.get('/api/fleets', parse: (json) => parseList(json, Fleet.fromJson));
+  Future<List<Fleet>> list() =>
+      _api.get('/api/fleets', parse: (json) => parseList(json, Fleet.fromJson));
 }
 
-final fleetsRepositoryProvider = Provider<FleetsRepository>((ref) => FleetsRepository(ref.watch(apiClientProvider)));
+final fleetsRepositoryProvider = Provider<FleetsRepository>(
+  (ref) => FleetsRepository(ref.watch(apiClientProvider)),
+);
 
 /// Fleets the current user can see. Reloads when the user changes.
 final fleetsProvider = FutureProvider<List<Fleet>>((ref) async {
