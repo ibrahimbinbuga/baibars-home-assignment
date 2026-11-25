@@ -81,8 +81,12 @@ flowchart LR
 
 - **Clock-based states depend on the phone's clock.** "Stale" and the session-expiry timer use the device time;
   a badly wrong clock shows vehicles stale too early/late (the server's Offline status is not affected).
-- **Access changes apply on the next connection / login.** Removing someone's fleet doesn't cut an open real-time
-  connection, and roles are read from the 60-minute token.
+- **Open real-time connections keep their groups.** REST checks the user and their current role on every request,
+  but a hub connection's fleet groups are decided when it connects: a removed fleet or a changed role applies to it on
+  the next (re)connect, and a **deleted user's already-open connection stays open until the token expires**
+  (≤ 60 min). New connections of a deleted user are rejected.
+- **iOS keeps Keychain items when the app is uninstalled**, so a reinstalled app can start with an old token. That
+  token is accepted only if its user still exists; otherwise the first request gets 401 and the app shows login.
 - **Single API instance.** No SignalR backplane; startup migrations and seeding would race with several instances.
 - **History list shows every sample** of the last hour (~1800 rows); the chart averages per minute. No live append.
 - **A detail screen opened for a vehicle not in the list** (rare fallback path) doesn't update live.
@@ -139,7 +143,12 @@ Notes written while building, grouped by area. Decision first, then why.
   one `BCrypt.Verify` against a dummy hash so response time is similar.
 - **Email normalized** (trim + lowercase) on login and when stored.
 - **JWT claims kept short** (`MapInboundClaims = false`): `sub`, `email`, `role` as in the token.
-- **Role is read from the token**, so a role change applies at the next login (60-minute tokens, no refresh tokens).
+- **A valid token is not enough: the user must still exist, and the role comes from the database.** After the JWT is
+  validated (`OnTokenValidated`), the user is loaded by `sub` (one primary-key query, no tracking). A deleted user gets
+  401 on the next request (also a deleted admin, whose token still says "Admin"), and the role claim is replaced with
+  the current database role, so promoting/demoting someone applies on their next request without a new login. Cost:
+  one primary-key lookup per request and per hub connection. Found by the clean-clone check: a token from an earlier
+  database (same demo signing key) was still accepted and returned empty data instead of 401.
 - **Fallback authorization policy**: every endpoint requires a logged-in user unless marked `[AllowAnonymous]`
   (login, `/health`, OpenAPI document). A new endpoint can't be exposed by forgetting an attribute.
 - **Login rate limit**: built-in ASP.NET Core rate limiter, fixed window per client IP, on `POST /api/auth/login`
@@ -226,8 +235,10 @@ Notes written while building, grouped by area. Decision first, then why.
 ### Real-time (SignalR hub)
 - **Strongly typed hub (`Hub<IFleetClient>`) with no client → server methods.** Group membership is decided in
   `OnConnectedAsync` from `IVehicleAccessService`, the same rule as REST. A client cannot ask to join a fleet, so the
-  real-time channel can't leak data across fleets. Access changes apply on the next connection (acceptable for the
-  demo; production would remove a user from groups when their access is revoked).
+  real-time channel can't leak data across fleets. Group membership is fixed for the life of a connection: access
+  changes apply on the next (re)connect, and a deleted user's open connection lasts until token expiry (acceptable
+  for the demo; production would remove the user from groups / abort their connections when access is revoked).
+  Connecting runs the same user check as REST, so a deleted user can't open a new connection.
 - **Sends go to `fleet:{fleetId}` groups only**, through `IHubContext<FleetHub, IFleetClient>` behind
   `IFleetBroadcaster`, after commit.
 - **Same JSON settings for REST and SignalR** (`JsonConfiguration.Apply`), so the app parses one `VehicleDto` shape.

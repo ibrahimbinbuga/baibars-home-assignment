@@ -124,7 +124,7 @@ cd mobile/fleet_monitor && flutter test
 cd mobile/fleet_monitor && flutter analyze
 ```
 
-At the time of writing: 107 backend tests, 108 mobile tests, analyzer clean.
+At the time of writing: 112 backend tests, 108 mobile tests, analyzer clean.
 
 ## Demo scenarios
 

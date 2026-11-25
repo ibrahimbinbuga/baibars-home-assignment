@@ -16,7 +16,7 @@ Every error is RFC 7807 ProblemDetails (`application/problem+json`), never a sta
 | Status | When |
 |---|---|
 | `400` | Validation failed (body or query). `errors` holds the messages per field. |
-| `401` | Missing/invalid/expired token (or device key on ingest); wrong email/password on login. |
+| `401` | Missing/invalid/expired token, or the token's user no longer exists (or a bad device key on ingest); wrong email/password on login. |
 | `404` | Unknown route, or a vehicle that doesn't exist **or** isn't in the caller's fleets (same answer). |
 | `429` | Too many login attempts (`Retry-After` header). |
 | `503` | Ingest: concurrent update, retry the same sample. Health: database not reachable. |
@@ -39,6 +39,9 @@ Every error is RFC 7807 ProblemDetails (`application/problem+json`), never a sta
   in seconds. It is an upper bound: the limiter reports the full window length, not the time left in it
 
 Email is trimmed and case-insensitive. The token is valid for 60 minutes; there are no refresh tokens.
+On every authenticated request (and hub connection) the server checks that the token's user still exists and uses
+their **current role from the database**, not the role in the token: a deleted user gets `401`, and a role change
+applies on the next request without logging in again.
 
 ### `GET /api/auth/me`
 `200` → `{ "user": { "id", "email", "displayName", "role" }, "fleets": [ { "id", "name", "region" } ] }`
@@ -192,8 +195,8 @@ Processing rules:
 - **Protocol:** JSON with the same settings as the REST API: camelCase properties, enums as strings.
 - **Server → client only.** There are no methods a client can call.
 - **Groups are decided by the server** when the connection opens: one group per fleet the user can see (admin: all;
-  operator: assigned fleets). A user with no fleets stays connected and receives nothing. If a user's access changes,
-  it applies on their next connection.
+  operator: assigned fleets). A user with no fleets stays connected and receives nothing. Groups are fixed for the
+  life of a connection: if a user's access changes, it applies on their next (re)connect.
 - **Token expiry closes the connection** (at the token's `exp`). The client should log in again (there are no refresh
   tokens) and reconnect.
 
