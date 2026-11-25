@@ -84,9 +84,10 @@ flowchart LR
 - **Open real-time connections keep their groups.** REST checks the user and their current role on every request,
   but a hub connection's fleet groups are decided when it connects: a removed fleet or a changed role applies to it on
   the next (re)connect, and a **deleted user's already-open connection stays open until the token expires**
-  (≤ 60 min). New connections of a deleted user are rejected.
+  (≤ 60 min). New connections and reconnects of a deleted user are rejected (401), and the app then logs out.
 - **iOS keeps Keychain items when the app is uninstalled**, so a reinstalled app can start with an old token. That
-  token is accepted only if its user still exists; otherwise the first request gets 401 and the app shows login.
+  token is accepted only if its user still exists; otherwise the first request or hub connect gets 401 and the app
+  shows login.
 - **Single API instance.** No SignalR backplane; startup migrations and seeding would race with several instances.
 - **History list shows every sample** of the last hour (~1800 rows); the chart averages per minute. No live append.
 - **A detail screen opened for a vehicle not in the list** (rare fallback path) doesn't update live.
@@ -334,6 +335,12 @@ Notes written while building, grouped by area. Decision first, then why.
 - **Session expiry vs. network loss**: if the hub closes and the token is expired (the server closes it at `exp`),
   the app logs out with "session expired" instead of showing Disconnected. On resume the expiry is checked first,
   because timers don't run while the app is suspended.
+- **401 on hub connect/reconnect = 401 on REST**: the server no longer accepts the token (e.g. the user was
+  deleted), so the app logs out with the same "session" message, stops the automatic reconnect and the 30 s loop,
+  and shows no Disconnected banner. Network errors and 5xx keep the Reconnecting/Disconnected + retry behaviour.
+  The status code is read on the hub's HTTP client (the negotiate request), because the package wraps errors
+  during its automatic reconnect in a plain `Exception` and the `HttpError.statusCode` is lost there; a small
+  retry policy then stops the reconnect once a 401 was seen. Matched on the status code, never on message text.
 - **Lifecycle**: background → connection and ticker stopped on purpose (no banner, no retries); foreground →
   reconnect, then re-fetch.
 - **Live activity**: `ActivityRaised` is added to an open activity feed for that vehicle, deduplicated by event id;

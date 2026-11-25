@@ -124,7 +124,7 @@ cd mobile/fleet_monitor && flutter test
 cd mobile/fleet_monitor && flutter analyze
 ```
 
-At the time of writing: 112 backend tests, 108 mobile tests, analyzer clean.
+At the time of writing: 112 backend tests, 116 mobile tests, analyzer clean.
 
 ## Demo scenarios
 
@@ -202,7 +202,8 @@ At the time of writing: 112 backend tests, 108 mobile tests, analyzer clean.
   screens with fake repositories).
 - End to end against `docker compose` on **both the iOS simulator and the Android emulator**: login, fleet scoping,
   live updates, offline detection (~33 s), API restart (Reconnecting → recovers), API down (Disconnected → Retry),
-  backgrounding and resuming, session restore and logout.
+  backgrounding and resuming, session restore and logout, and a user deleted while the app is open (the next hub
+  reconnect gets 401 → login).
 
 ## Known issues
 
