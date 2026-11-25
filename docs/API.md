@@ -5,6 +5,22 @@ Base URL: `http://localhost:8080`. JSON is camelCase; enums are strings. Errors 
 
 All endpoints require `Authorization: Bearer <accessToken>` unless marked **anonymous**.
 
+## Errors
+
+Every error is RFC 7807 ProblemDetails (`application/problem+json`), never a stack trace:
+
+```json
+{ "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5", "title": "Vehicle not found.", "status": 404, "traceId": "00-…" }
+```
+
+| Status | When |
+|---|---|
+| `400` | Validation failed (body or query). `errors` holds the messages per field. |
+| `401` | Missing/invalid/expired token (or device key on ingest); wrong email/password on login. |
+| `404` | Unknown route, or a vehicle that doesn't exist **or** isn't in the caller's fleets (same answer). |
+| `429` | Too many login attempts (`Retry-After` header). |
+| `503` | Ingest: concurrent update, retry the same sample. Health: database not reachable. |
+
 ## Health
 
 ### `GET /health` — anonymous
