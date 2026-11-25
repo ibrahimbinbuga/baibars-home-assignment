@@ -25,35 +25,54 @@ void main() {
       expect(v.hasLocation, isTrue);
     });
 
-    test('vehicle without telemetry: location, metrics and timestamps are null', () {
-      final v = Vehicle.fromJson({
-        ...vehicleJson(status: 'Offline'),
-        'latitude': null,
-        'longitude': null,
-        'speedKmh': null,
-        'headingDeg': null,
-        'batteryPct': null,
-        'lastTelemetryAt': null,
-        'lastSeenAt': null,
-      });
+    test(
+      'vehicle without telemetry: location, metrics and timestamps are null',
+      () {
+        final v = Vehicle.fromJson({
+          ...vehicleJson(status: 'Offline'),
+          'latitude': null,
+          'longitude': null,
+          'speedKmh': null,
+          'headingDeg': null,
+          'batteryPct': null,
+          'lastTelemetryAt': null,
+          'lastSeenAt': null,
+        });
 
-      expect(v.status, VehicleStatus.offline);
-      expect(v.connectivity, Connectivity.offline);
-      expect([v.latitude, v.longitude, v.speedKmh, v.headingDeg, v.batteryPct], everyElement(isNull));
-      expect(v.lastTelemetryAt, isNull);
-      expect(v.lastSeenAt, isNull);
-      expect(v.hasLocation, isFalse);
-    });
+        expect(v.status, VehicleStatus.offline);
+        expect(v.connectivity, Connectivity.offline);
+        expect([
+          v.latitude,
+          v.longitude,
+          v.speedKmh,
+          v.headingDeg,
+          v.batteryPct,
+        ], everyElement(isNull));
+        expect(v.lastTelemetryAt, isNull);
+        expect(v.lastSeenAt, isNull);
+        expect(v.hasLocation, isFalse);
+      },
+    );
 
-    test('unknown status and connectivity become "unknown" instead of crashing', () {
-      final v = Vehicle.fromJson({...vehicleJson(), 'status': 'Hovering', 'connectivity': 'Satellite'});
+    test(
+      'unknown status and connectivity become "unknown" instead of crashing',
+      () {
+        final v = Vehicle.fromJson({
+          ...vehicleJson(),
+          'status': 'Hovering',
+          'connectivity': 'Satellite',
+        });
 
-      expect(v.status, VehicleStatus.unknown);
-      expect(v.connectivity, Connectivity.unknown);
-    });
+        expect(v.status, VehicleStatus.unknown);
+        expect(v.connectivity, Connectivity.unknown);
+      },
+    );
 
     test('timestamps with +00:00 offset are parsed as UTC', () {
-      final v = Vehicle.fromJson({...vehicleJson(), 'updatedAt': '2026-11-25T11:50:18.872497+00:00'});
+      final v = Vehicle.fromJson({
+        ...vehicleJson(),
+        'updatedAt': '2026-11-25T11:50:18.872497+00:00',
+      });
 
       expect(v.updatedAt.isUtc, isTrue);
       expect(v.updatedAt, DateTime.utc(2026, 11, 25, 11, 50, 18, 872, 497));
@@ -70,7 +89,13 @@ void main() {
     test('parses a page with a cursor', () {
       final page = ActivityPage.fromJson({
         'items': [
-          {'id': 981, 'vehicleId': 'v-1', 'type': 'StateChanged', 'occurredAt': '2026-11-26T10:00:00Z', 'details': 'Idle → Moving'},
+          {
+            'id': 981,
+            'vehicleId': 'v-1',
+            'type': 'StateChanged',
+            'occurredAt': '2026-11-26T10:00:00Z',
+            'details': 'Idle → Moving',
+          },
         ],
         'nextBefore': 'NjM5XzEw',
       });
@@ -82,15 +107,23 @@ void main() {
     });
 
     test('last page has null nextBefore', () {
-      final page = ActivityPage.fromJson({'items': <Object>[], 'nextBefore': null});
+      final page = ActivityPage.fromJson({
+        'items': <Object>[],
+        'nextBefore': null,
+      });
 
       expect(page.items, isEmpty);
       expect(page.hasMore, isFalse);
     });
 
     test('unknown event type becomes "unknown"', () {
-      final e = ActivityEvent.fromJson(
-          {'id': 1, 'vehicleId': 'v-1', 'type': 'Teleported', 'occurredAt': '2026-11-26T10:00:00Z', 'details': ''});
+      final e = ActivityEvent.fromJson({
+        'id': 1,
+        'vehicleId': 'v-1',
+        'type': 'Teleported',
+        'occurredAt': '2026-11-26T10:00:00Z',
+        'details': '',
+      });
 
       expect(e.type, ActivityEventType.unknown);
     });
@@ -103,8 +136,13 @@ void main() {
         ('LowBattery', ActivityEventType.lowBattery),
         ('FaultRaised', ActivityEventType.faultRaised),
       ]) {
-        final e = ActivityEvent.fromJson(
-            {'id': 1, 'vehicleId': 'v', 'type': raw, 'occurredAt': '2026-11-26T10:00:00Z', 'details': ''});
+        final e = ActivityEvent.fromJson({
+          'id': 1,
+          'vehicleId': 'v',
+          'type': raw,
+          'occurredAt': '2026-11-26T10:00:00Z',
+          'details': '',
+        });
         expect(e.type, expected, reason: raw);
       }
     });
@@ -117,10 +155,15 @@ void main() {
         'to': '2026-11-26T10:00:00Z',
         'items': [
           {
-            'sequence': 1763456789012, // Unix-ms based sequence from the simulator: needs 64-bit int
+            'sequence':
+                1763456789012, // Unix-ms based sequence from the simulator: needs 64-bit int
             'recordedAt': '2026-11-26T09:59:58Z',
             'receivedAt': '2026-11-26T09:59:59Z',
-            'latitude': 36.9, 'longitude': 34.9, 'speedKmh': 0, 'headingDeg': 0, 'batteryPct': 50,
+            'latitude': 36.9,
+            'longitude': 34.9,
+            'speedKmh': 0,
+            'headingDeg': 0,
+            'batteryPct': 50,
             'state': 'Docked',
           },
         ],
@@ -134,10 +177,19 @@ void main() {
   });
 
   group('Auth', () {
-    final userJson = {'id': 'u-1', 'email': 'admin@demo.local', 'displayName': 'Demo Admin', 'role': 'Admin'};
+    final userJson = {
+      'id': 'u-1',
+      'email': 'admin@demo.local',
+      'displayName': 'Demo Admin',
+      'role': 'Admin',
+    };
 
     test('parses LoginResponse', () {
-      final r = LoginResponse.fromJson({'accessToken': 'jwt', 'expiresAt': '2026-11-26T11:00:00Z', 'user': userJson});
+      final r = LoginResponse.fromJson({
+        'accessToken': 'jwt',
+        'expiresAt': '2026-11-26T11:00:00Z',
+        'user': userJson,
+      });
 
       expect(r.accessToken, 'jwt');
       expect(r.expiresAt, DateTime.utc(2026, 11, 26, 11));
@@ -157,7 +209,10 @@ void main() {
     });
 
     test('Fleet parses', () {
-      expect(Fleet.fromJson({'id': 'f', 'name': 'N', 'region': 'R'}).region, 'R');
+      expect(
+        Fleet.fromJson({'id': 'f', 'name': 'N', 'region': 'R'}).region,
+        'R',
+      );
     });
 
     test('UserInfo survives a toJson/fromJson round trip (secure storage)', () {
@@ -187,7 +242,11 @@ void main() {
     });
 
     test('is lenient with unexpected shapes', () {
-      final p = ProblemDetails.fromJson({'status': 'oops', 'title': 3, 'errors': 'none'});
+      final p = ProblemDetails.fromJson({
+        'status': 'oops',
+        'title': 3,
+        'errors': 'none',
+      });
 
       expect(p.status, isNull);
       expect(p.title, isNull);

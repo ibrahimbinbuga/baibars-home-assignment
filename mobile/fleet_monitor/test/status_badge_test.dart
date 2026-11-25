@@ -8,20 +8,35 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   for (final status in DisplayStatus.values) {
     for (final size in BadgeSize.values) {
-      testWidgets('${status.name} (${size.name}) shows its label and icon, not only a colour', (tester) async {
-        await tester.pumpWidget(MaterialApp(
-          theme: AppTheme.light(),
-          home: Scaffold(body: Center(child: StatusBadge(status: status, size: size))),
-        ));
+      testWidgets(
+        '${status.name} (${size.name}) shows its label and icon, not only a colour',
+        (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.light(),
+              home: Scaffold(
+                body: Center(
+                  child: StatusBadge(status: status, size: size),
+                ),
+              ),
+            ),
+          );
 
-        expect(find.text(status.label), findsOneWidget);
-        expect(find.byIcon(status.icon), findsOneWidget);
-      });
+          expect(find.text(status.label), findsOneWidget);
+          expect(find.byIcon(status.icon), findsOneWidget);
+        },
+      );
     }
   }
 
   test('every status has a distinct label and icon', () {
-    expect(DisplayStatus.values.map((s) => s.label).toSet(), hasLength(DisplayStatus.values.length));
-    expect(DisplayStatus.values.map((s) => s.icon).toSet(), hasLength(DisplayStatus.values.length));
+    expect(
+      DisplayStatus.values.map((s) => s.label).toSet(),
+      hasLength(DisplayStatus.values.length),
+    );
+    expect(
+      DisplayStatus.values.map((s) => s.icon).toSet(),
+      hasLength(DisplayStatus.values.length),
+    );
   });
 }

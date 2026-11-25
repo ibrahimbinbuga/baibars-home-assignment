@@ -8,7 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/fakes.dart';
 
 ActivityEvent e(int id) => ActivityEvent(
-    id: id, vehicleId: 'v', type: ActivityEventType.stateChanged, occurredAt: DateTime.utc(2026), details: 'e$id');
+  id: id,
+  vehicleId: 'v',
+  type: ActivityEventType.stateChanged,
+  occurredAt: DateTime.utc(2026),
+  details: 'e$id',
+);
 
 void main() {
   late FakeVehiclesRepository repo;
@@ -16,7 +21,9 @@ void main() {
 
   setUp(() {
     repo = FakeVehiclesRepository();
-    container = ProviderContainer.test(overrides: [vehiclesRepositoryProvider.overrideWithValue(repo)]);
+    container = ProviderContainer.test(
+      overrides: [vehiclesRepositoryProvider.overrideWithValue(repo)],
+    );
   });
 
   test('Load more passes the cursor and appends the next page', () async {
@@ -42,16 +49,22 @@ void main() {
     expect(repo.activityBefores, [null]);
   });
 
-  test('a failed Load more keeps the loaded items and reports the error', () async {
-    repo.activityPages.add(ActivityPage(items: [e(2)], nextBefore: 'c'));
-    await container.read(activityFeedProvider('v').future);
-    repo.activityError = const ApiException(kind: ApiErrorKind.network, title: 'Cannot reach the server');
+  test(
+    'a failed Load more keeps the loaded items and reports the error',
+    () async {
+      repo.activityPages.add(ActivityPage(items: [e(2)], nextBefore: 'c'));
+      await container.read(activityFeedProvider('v').future);
+      repo.activityError = const ApiException(
+        kind: ApiErrorKind.network,
+        title: 'Cannot reach the server',
+      );
 
-    await container.read(activityFeedProvider('v').notifier).loadMore();
+      await container.read(activityFeedProvider('v').notifier).loadMore();
 
-    final state = container.read(activityFeedProvider('v')).value!;
-    expect(state.items.map((x) => x.id), [2]);
-    expect(state.loadMoreError?.title, 'Cannot reach the server');
-    expect(state.hasMore, isTrue);
-  });
+      final state = container.read(activityFeedProvider('v')).value!;
+      expect(state.items.map((x) => x.id), [2]);
+      expect(state.loadMoreError?.title, 'Cannot reach the server');
+      expect(state.hasMore, isTrue);
+    },
+  );
 }

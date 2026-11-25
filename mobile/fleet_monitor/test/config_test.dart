@@ -9,11 +9,20 @@ void main() {
   test('missing API_BASE_URL fails with instructions', () {
     expect(
       () => AppConfig.parse(''),
-      throwsA(isA<ConfigException>().having((e) => e.message, 'message', contains('--dart-define=API_BASE_URL'))),
+      throwsA(
+        isA<ConfigException>().having(
+          (e) => e.message,
+          'message',
+          contains('--dart-define=API_BASE_URL'),
+        ),
+      ),
     );
   });
 
   test('non-http value is rejected', () {
-    expect(() => AppConfig.parse('localhost:8080'), throwsA(isA<ConfigException>()));
+    expect(
+      () => AppConfig.parse('localhost:8080'),
+      throwsA(isA<ConfigException>()),
+    );
   });
 }
