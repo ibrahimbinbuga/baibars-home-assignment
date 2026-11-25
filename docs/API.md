@@ -19,8 +19,8 @@ All endpoints require `Authorization: Bearer <accessToken>` unless marked **anon
 - `200` → `{ "accessToken": "...", "expiresAt": "...", "user": { "id", "email", "displayName", "role" } }`
 - `401` → `"Invalid email or password."` (same for unknown email and wrong password)
 - `400` → missing fields
-- `429` → too many attempts from this IP (default 5 per 60 s, `RateLimiting:Login:*`); the `Retry-After` header gives the
-  seconds until another attempt is allowed
+- `429` → too many attempts from this IP (default 5 per 60 s, `RateLimiting:Login:*`); the `Retry-After` header gives a wait
+  in seconds. It is an upper bound: the limiter reports the full window length, not the time left in it
 
 Email is trimmed and case-insensitive. The token is valid for 60 minutes; there are no refresh tokens.
 

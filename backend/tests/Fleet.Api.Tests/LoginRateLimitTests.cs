@@ -25,7 +25,7 @@ public class LoginRateLimitTests(FleetApiFactory factory)
         Assert.Equal(HttpStatusCode.TooManyRequests, blocked.StatusCode);
         Assert.Equal("application/problem+json", blocked.Content.Headers.ContentType?.MediaType);
 
-        // Seconds until the 60 s window ends: the app shows it as a countdown.
+        // A wait in seconds (upper bound: the window length); the app shows it as a countdown.
         var retryAfter = blocked.Headers.RetryAfter?.Delta;
         Assert.NotNull(retryAfter);
         Assert.InRange(retryAfter.Value.TotalSeconds, 1, 60);

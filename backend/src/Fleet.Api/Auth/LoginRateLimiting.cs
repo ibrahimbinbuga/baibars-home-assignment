@@ -30,8 +30,8 @@ public static class LoginRateLimiting
             // The body is left empty on purpose: UseStatusCodePages turns the bare 429 into ProblemDetails.
             limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-            // Tell the client how long to wait (seconds until the current window ends), so the app can show a
-            // countdown instead of guessing.
+            // Tell the client how long to wait, so the app can show a countdown instead of guessing. The fixed-window
+            // limiter reports the full window length here (not the time left), so this is a safe upper bound.
             limiter.OnRejected = (context, _) =>
             {
                 if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
