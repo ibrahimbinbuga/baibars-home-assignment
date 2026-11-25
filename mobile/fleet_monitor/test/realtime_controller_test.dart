@@ -33,12 +33,16 @@ void main() {
     }
   }
 
-  Future<void> startApp(WidgetTester tester, {DateTime? expiresAt}) async {
+  Future<void> startApp(
+    WidgetTester tester, {
+    DateTime? expiresAt,
+    Future<void> Function()? Function(int attempt)? behaviour,
+  }) async {
     now = t0;
     log = [];
     connections = [];
     statuses = [];
-    startBehaviour = (_) => null;
+    startBehaviour = behaviour ?? (_) => null;
     repo = FakeVehiclesRepository()
       ..listAnswers.add(() {
         log.add('list');
@@ -275,6 +279,88 @@ void main() {
         hasLength(1),
         reason: 'nothing reconnects after logout',
       );
+      await finish(tester);
+    },
+  );
+
+  testWidgets('401 on the first connect → logout as "unauthorized", no retry', (
+    tester,
+  ) async {
+    await startApp(
+      tester,
+      behaviour: (_) =>
+          () async => throw const RealtimeUnauthorized(),
+    );
+
+    expect(auth.logouts, [LogoutReason.unauthorized]);
+    expect(statuses, isNot(contains(RealtimeStatus.disconnected)));
+    await tester.pump(const Duration(minutes: 2));
+    await settle(tester);
+    expect(connections, hasLength(1), reason: 'no retry after a 401');
+    await finish(tester);
+  });
+
+  testWidgets(
+    '401 during the automatic reconnect → logout, no Disconnected, no 30 s loop',
+    (tester) async {
+      await startApp(tester);
+      connections.last.link.add(const LinkReconnecting());
+      await settle(tester);
+
+      // The adapter closes with RealtimeUnauthorized when the reconnect's negotiate got 401.
+      connections.last.link.add(const LinkClosed(RealtimeUnauthorized()));
+      await settle(tester);
+
+      expect(auth.logouts, [LogoutReason.unauthorized]);
+      expect(statuses, isNot(contains(RealtimeStatus.disconnected)));
+      await tester.pump(const Duration(minutes: 2));
+      await settle(tester);
+      expect(connections, hasLength(1));
+      await finish(tester);
+    },
+  );
+
+  testWidgets('401 on a 30 s retry → logout, and the retry loop stops', (
+    tester,
+  ) async {
+    await startApp(tester);
+    startBehaviour = (_) =>
+        () async => throw const RealtimeUnauthorized();
+    connections.last.link.add(const LinkClosed()); // network drop
+    await settle(tester);
+    expect(stateOf().status, RealtimeStatus.disconnected);
+
+    await tester.pump(RealtimeController.retryInterval);
+    await settle(tester);
+    expect(connections, hasLength(2));
+    expect(auth.logouts, [LogoutReason.unauthorized]);
+
+    await tester.pump(const Duration(minutes: 2));
+    await settle(tester);
+    expect(connections, hasLength(2), reason: 'the 30 s timer was cancelled');
+    await finish(tester);
+  });
+
+  testWidgets(
+    '503 / network error on reconnect → Disconnected and retry as before',
+    (tester) async {
+      await startApp(tester);
+      startBehaviour = (attempt) => attempt == 1
+          ? () async => throw Exception('503: Service Unavailable')
+          : null;
+      connections.last.link.add(LinkClosed(Exception('connection lost')));
+      await settle(tester);
+      expect(stateOf().banner, BannerConnectionState.disconnected);
+
+      await tester.pump(RealtimeController.retryInterval); // attempt 1: 503
+      await settle(tester);
+      expect(stateOf().status, RealtimeStatus.disconnected);
+
+      await tester.pump(RealtimeController.retryInterval); // attempt 2: ok
+      await settle(tester);
+      expect(stateOf().status, RealtimeStatus.connected);
+      expect(connections, hasLength(3));
+      expect(auth.logouts, isEmpty);
       await finish(tester);
     },
   );
