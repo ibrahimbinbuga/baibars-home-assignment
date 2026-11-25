@@ -97,16 +97,7 @@ class _ListContent extends ConsumerWidget {
               AppSpacing.xs,
             ),
             child: Row(
-              children: [
-                Expanded(child: _CountLine(view: view)),
-                Text(
-                  'Sorted by status',
-                  style: AppText.labelMedium.copyWith(
-                    fontWeight: FontWeight.w400,
-                    color: AppPalette.onSurfaceVariant,
-                  ),
-                ),
-              ],
+              children: [Expanded(child: _CountLine(view: view))],
             ),
           ),
         ),
@@ -418,23 +409,36 @@ class _CountLine extends ConsumerWidget {
       _ => null,
     };
     if (suffix != null && last != null) {
-      return Text(
-        'Last received ${clockTime(last)} · $suffix',
-        key: const Key('countLine'),
-        style: AppText.tabular(
-          AppText.labelMedium.copyWith(color: AppPalette.onWarningContainer),
+      // Not live: the freshness line takes the whole row ("Sorted by status" is hidden), so it fits on one line
+      // even on narrow phones; scaled down slightly rather than wrapped if it still doesn't.
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Text(
+          'Last received ${clockTime(last)} · $suffix',
+          key: const Key('countLine'),
+          maxLines: 1,
+          style: AppText.tabular(
+            AppText.labelMedium.copyWith(color: AppPalette.onWarningContainer),
+          ),
         ),
       );
     }
-    return Text(
-      view.countLine,
-      key: const Key('countLine'),
-      style: AppText.tabular(
-        AppText.labelMedium.copyWith(
-          fontWeight: FontWeight.w400,
-          color: AppPalette.onSurfaceVariant,
+    final muted = AppText.labelMedium.copyWith(
+      fontWeight: FontWeight.w400,
+      color: AppPalette.onSurfaceVariant,
+    );
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            view.countLine,
+            key: const Key('countLine'),
+            style: AppText.tabular(muted),
+          ),
         ),
-      ),
+        Text('Sorted by status', style: muted),
+      ],
     );
   }
 }
