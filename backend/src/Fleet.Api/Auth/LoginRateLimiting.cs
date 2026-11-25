@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Options;
 
@@ -28,6 +29,19 @@ public static class LoginRateLimiting
         {
             // The body is left empty on purpose: UseStatusCodePages turns the bare 429 into ProblemDetails.
             limiter.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+            // Tell the client how long to wait (seconds until the current window ends), so the app can show a
+            // countdown instead of guessing.
+            limiter.OnRejected = (context, _) =>
+            {
+                if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+                {
+                    var seconds = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds));
+                    context.HttpContext.Response.Headers.RetryAfter = seconds.ToString(CultureInfo.InvariantCulture);
+                }
+
+                return ValueTask.CompletedTask;
+            };
 
             limiter.AddPolicy(PolicyName, httpContext =>
             {
