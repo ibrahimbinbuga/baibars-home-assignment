@@ -118,6 +118,17 @@
 - Simulator: each send at Debug; startup, state changes, dropout start/end at Information; retries at Warning;
   rejected samples at Error.
 
+## Ordering updates on the client
+- **`Vehicle.UpdatedAt` (server time) is the per-vehicle ordering key**, set on every write to the vehicle row
+  (ingestion and offline detection) and exposed as `updatedAt` on REST and the hub. `lastTelemetryAt` doesn't work:
+  going Offline doesn't change it, and a REST snapshot read *before* the Offline flip but arriving *after* the live
+  Offline update would have the same `lastTelemetryAt` and flip the vehicle back to Online.
+- **Strictly increasing per vehicle**: truncated to microseconds (Postgres precision, so clients compare exactly what
+  is stored) and at least 1 µs after the previous value, even within one microsecond or if the clock steps back.
+  The `xmin` token already serializes writers per vehicle, so "previous" is always the committed value.
+- Clients keep the copy with the greater `updatedAt` and ignore equal or older ones, for live updates and REST
+  snapshots alike.
+
 ## Real-time (SignalR hub)
 - **Strongly typed hub (`Hub<IFleetClient>`) with no client → server methods.** Group membership is decided in
   `OnConnectedAsync` from `IVehicleAccessService`, the same rule as REST. A client cannot ask to join a fleet, so the

@@ -26,6 +26,26 @@ public class Vehicle
     public long? LastSequence { get; set; }
     public Connectivity Connectivity { get; set; } = Connectivity.Offline;
 
+    /// <summary>
+    /// Server time of the last write to this row (ingestion or offline detection). Strictly increases per vehicle
+    /// (see <see cref="NextUpdatedAt"/>), so clients can order updates for one vehicle by it and ignore stale ones.
+    /// </summary>
+    public DateTimeOffset UpdatedAt { get; set; }
+
+    /// <summary>
+    /// The UpdatedAt for a write happening at <paramref name="now"/>: truncated to microseconds (Postgres precision,
+    /// so the stored value is exactly what clients compare), and always at least 1 µs after the previous value,
+    /// even if two writes fall in the same microsecond or the server clock steps back.
+    /// </summary>
+    public static DateTimeOffset NextUpdatedAt(DateTimeOffset previous, DateTimeOffset now)
+    {
+        var utcTicks = now.UtcTicks;
+        var truncated = new DateTimeOffset(utcTicks - utcTicks % TimeSpan.TicksPerMicrosecond, TimeSpan.Zero);
+        return truncated > previous ? truncated : previous.AddMicroseconds(1);
+    }
+
+    public void MarkUpdated(DateTimeOffset now) => UpdatedAt = NextUpdatedAt(UpdatedAt, now);
+
     /// <summary>Maps to Postgres' xmin system column; used as an optimistic concurrency token.</summary>
     public uint Version { get; set; }
 

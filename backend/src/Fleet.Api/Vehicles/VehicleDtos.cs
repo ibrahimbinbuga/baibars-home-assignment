@@ -31,6 +31,9 @@ public record VehicleDto
     public double? BatteryPct { get; init; }
     public DateTimeOffset? LastTelemetryAt { get; init; }
     public DateTimeOffset? LastSeenAt { get; init; }
+
+    /// <summary>Per-vehicle ordering key: a client keeps the copy with the greatest UpdatedAt.</summary>
+    public required DateTimeOffset UpdatedAt { get; init; }
 }
 
 public record TelemetryPointDto(

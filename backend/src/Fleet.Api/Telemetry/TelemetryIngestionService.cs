@@ -90,6 +90,7 @@ public class TelemetryIngestionService(
 
         // 2. Any accepted sample proves the vehicle is alive, even a late one.
         vehicle.LastSeenAt = now;
+        vehicle.MarkUpdated(now);
         if (vehicle.Connectivity == Connectivity.Offline)
         {
             vehicle.Connectivity = Connectivity.Online;

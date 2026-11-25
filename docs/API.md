@@ -56,9 +56,14 @@ Vehicles in scope with their latest state, sorted by fleet name, then vehicle na
   "latitude": 36.92, "longitude": 34.89,
   "speedKmh": 12.4, "headingDeg": 270, "batteryPct": 76,
   "lastTelemetryAt": "2026-11-26T10:00:00Z",
-  "lastSeenAt": "2026-11-26T10:00:01Z"
+  "lastSeenAt": "2026-11-26T10:00:01Z",
+  "updatedAt": "2026-11-26T10:00:01.123456Z"
 }
 ```
+- `updatedAt` is the server time of the last change to this vehicle (new sample or going Offline). It **strictly
+  increases** per vehicle, so it is the ordering key for clients: when two copies of the same vehicle meet (a live
+  `VehicleUpdated` and a REST snapshot), keep the one with the greater `updatedAt` and ignore the other. Do not order by
+  `lastTelemetryAt`: going Offline does not change it.
 - `status` is `Offline` when `connectivity` is `Offline`, otherwise the state last reported by the vehicle.
 - `connectivity` is decided by the server: a vehicle with no telemetry for **30 s** is marked `Offline`. The check runs
   every 5 s, so a vehicle that stops reporting shows as `Offline` **30–35 s** after its last sample

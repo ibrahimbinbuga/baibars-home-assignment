@@ -67,6 +67,7 @@ public class DbSeeder(
                 SerialNumber = device.SerialNumber,
                 DeviceKeyHash = DeviceKeyHasher.Hash(device.DeviceKey),
                 CreatedAt = now,
+                UpdatedAt = now,
                 // No telemetry yet: the vehicle starts Offline with no location until its first sample.
                 Connectivity = Connectivity.Offline,
             });

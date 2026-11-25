@@ -59,6 +59,7 @@ public static class TestData
                 SerialNumber = $"TEST-{suffix}",
                 DeviceKeyHash = DeviceKeyHasher.Hash(deviceKey),
                 CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
             };
             db.Vehicles.Add(vehicle);
             await db.SaveChangesAsync();

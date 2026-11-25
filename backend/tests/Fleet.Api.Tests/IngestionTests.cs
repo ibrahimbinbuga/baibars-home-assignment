@@ -97,6 +97,28 @@ public class IngestionTests(FleetApiFactory factory)
     }
 
     [Fact]
+    public async Task EveryAcceptedSample_AdvancesUpdatedAt_ButDuplicateDoesNot()
+    {
+        var (vehicleId, key) = await factory.CreateTestVehicleAsync();
+        var t = Now;
+        var created = (await GetVehicleAsAdminAsync(vehicleId)).UpdatedAt;
+
+        await _client.PostTelemetryAsync(key, new SampleBody(2, t));
+        var afterFirst = (await GetVehicleAsAdminAsync(vehicleId)).UpdatedAt;
+        // A late sample doesn't change the latest state, but it is still a write (LastSeenAt), so UpdatedAt moves.
+        await _client.PostTelemetryAsync(key, new SampleBody(1, t.AddSeconds(-5)));
+        var afterLate = (await GetVehicleAsAdminAsync(vehicleId)).UpdatedAt;
+        await _client.PostTelemetryAsync(key, new SampleBody(1, t.AddSeconds(-5)));
+        var afterDuplicate = (await GetVehicleAsAdminAsync(vehicleId)).UpdatedAt;
+
+        Assert.True(afterFirst > created);
+        Assert.True(afterLate > afterFirst);
+        Assert.Equal(afterLate, afterDuplicate);
+        var broadcast = factory.Broadcasts().For(vehicleId).Last(b => b.Method == "VehicleUpdated");
+        Assert.Equal(afterLate, ((VehicleDto)broadcast.Payload).UpdatedAt);
+    }
+
+    [Fact]
     public async Task OutOfOrderSample_IsStoredInHistory_ButDoesNotOverwriteLatestState()
     {
         var (vehicleId, key) = await factory.CreateTestVehicleAsync();

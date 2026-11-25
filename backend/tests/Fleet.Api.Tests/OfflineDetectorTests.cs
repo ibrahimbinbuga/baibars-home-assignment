@@ -32,8 +32,11 @@ public class OfflineDetectorTests(FleetApiFactory factory)
         await DetectOnceAsync(time);
         Assert.Equal(Connectivity.Online, await ConnectivityAsync(vehicleId));
 
+        var updatedAtWhileOnline = await UpdatedAtAsync(vehicleId);
         time.Advance(TimeSpan.FromSeconds(2)); // 31 s since last seen
         await DetectOnceAsync(time);
+        // Going Offline is a write too: clients must see it as newer than the last Online update.
+        Assert.True(await UpdatedAtAsync(vehicleId) > updatedAtWhileOnline);
         Assert.Equal(Connectivity.Offline, await ConnectivityAsync(vehicleId));
         Assert.Equal(ActivityEventType.WentOffline, (await LastEventAsync(vehicleId)).Type);
 
@@ -107,6 +110,9 @@ public class OfflineDetectorTests(FleetApiFactory factory)
 
     private Task<DateTimeOffset> LastSeenAtAsync(Guid vehicleId) =>
         factory.WithDbAsync(db => db.Vehicles.Where(v => v.Id == vehicleId).Select(v => v.LastSeenAt!.Value).SingleAsync());
+
+    private Task<DateTimeOffset> UpdatedAtAsync(Guid vehicleId) =>
+        factory.WithDbAsync(db => db.Vehicles.Where(v => v.Id == vehicleId).Select(v => v.UpdatedAt).SingleAsync());
 
     private Task<Connectivity> ConnectivityAsync(Guid vehicleId) =>
         factory.WithDbAsync(db => db.Vehicles.Where(v => v.Id == vehicleId).Select(v => v.Connectivity).SingleAsync());

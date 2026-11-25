@@ -31,5 +31,6 @@ public static class VehicleProjections
         BatteryPct = v.LastBatteryPct,
         LastTelemetryAt = v.LastTelemetryAt,
         LastSeenAt = v.LastSeenAt,
+        UpdatedAt = v.UpdatedAt,
     };
 }

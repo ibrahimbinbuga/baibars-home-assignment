@@ -53,6 +53,7 @@ public class OfflineDetector(
         db.ChangeTracker.Clear();
         db.Vehicles.Attach(snapshot); // tracked as unchanged, with the xmin we read as the expected Version
         snapshot.Connectivity = Connectivity.Offline;
+        snapshot.MarkUpdated(timeProvider.GetUtcNow());
 
         var wentOffline = new ActivityEvent
         {
