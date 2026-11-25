@@ -61,6 +61,17 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     await _storage.clear();
   }
 
+  /// Called when the app comes back to the foreground: timers don't run while the app is suspended, so the
+  /// expiry timer may not have fired. Returns true if the session had expired (and logs out).
+  Future<bool> checkExpiry() async {
+    final current = state.value;
+    if (current is Authenticated && !_now().isBefore(current.expiresAt)) {
+      await logout(LogoutReason.sessionExpired);
+      return true;
+    }
+    return false;
+  }
+
   Authenticated _startSession(StoredSession session) {
     _expiryTimer?.cancel();
     // No refresh tokens: when the token expires the user has to log in again (the server would reject it anyway).

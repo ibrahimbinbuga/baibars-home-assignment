@@ -15,6 +15,16 @@ class VehicleListNotifier extends AsyncNotifier<VehicleListState> {
 
   /// Pull-to-refresh / reconnect. Throws ApiException on failure and keeps the current list.
   Future<void> refresh() async {
+    // Nothing to refresh after logout (a refresh started just before logging out must not fetch afterwards).
+    if (ref.read(currentUserIdProvider) == null) return;
+    // If the first load is still running, wait for it: otherwise its (older) result could land after this newer
+    // snapshot and overwrite it. A failed first load is fine: the merge below replaces the error.
+    try {
+      await future;
+    } on Object {
+      // ignored on purpose
+    }
+    if (!ref.mounted || ref.read(currentUserIdProvider) == null) return;
     final snapshot = await ref.read(vehiclesRepositoryProvider).list();
     state = AsyncData(
       (state.value ?? VehicleListState.empty).mergeSnapshot(snapshot),

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/clock.dart';
+import '../../../core/realtime/ticker.dart';
 import '../data/fleet.dart';
 import '../data/fleets_repository.dart';
 import '../data/vehicle.dart';
@@ -89,7 +89,9 @@ VehicleListView buildVehicleListView({
 final vehicleListViewProvider = Provider<AsyncValue<VehicleListView>>((ref) {
   final filter = ref.watch(vehicleFilterProvider);
   final fleets = ref.watch(fleetsProvider).value ?? const <Fleet>[];
-  final now = ref.watch(clockProvider)();
+  // Rebuild when a vehicle becomes (or stops being) stale, not on every tick; "now" is read, not watched.
+  ref.watch(staleVehicleIdsProvider);
+  final now = ref.read(tickerProvider);
   return ref
       .watch(vehicleListProvider)
       .whenData(

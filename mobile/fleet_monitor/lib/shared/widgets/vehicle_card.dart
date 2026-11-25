@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_palette.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/status_colors.dart';
+import '../../core/realtime/ticker.dart';
 import '../../core/time_format.dart';
 import '../../features/vehicles/data/vehicle.dart';
 import '../../features/vehicles/domain/display_status.dart';
 import 'dashed_border.dart';
 import 'status_badge.dart';
 import 'status_visuals.dart';
+import 'time_ago_text.dart';
 
 /// VehicleCard(vehicle). The whole card is the tap target (min 96 px). Stale and Offline are muted (grey surface);
 /// Stale also gets a dashed outline; Fault gets a red outline.
@@ -103,15 +106,20 @@ class VehicleCard extends StatelessWidget {
         child: card,
       );
     }
-    return Semantics(
-      label: _semanticLabel(status),
-      button: onTap != null,
-      excludeSemantics: true,
+    // The label contains "updated Xs ago", so it ticks like the visible text. Only this wrapper rebuilds each
+    // second; the card itself is passed in as an already-built child.
+    return Consumer(
       child: card,
+      builder: (context, ref, child) => Semantics(
+        label: _semanticLabel(status, ref.watch(tickerProvider)),
+        button: onTap != null,
+        excludeSemantics: true,
+        child: child,
+      ),
     );
   }
 
-  String _semanticLabel(DisplayStatus status) {
+  String _semanticLabel(DisplayStatus status, DateTime now) {
     final base = '${vehicle.name}, ${vehicle.fleetName}, ${status.label}';
     if (vehicle.lastTelemetryAt == null) return '$base, no data yet';
     final battery = vehicle.batteryPct == null
@@ -174,8 +182,9 @@ class _MetricsRow extends StatelessWidget {
               : AppPalette.onSurfaceVariant,
         ),
         const SizedBox(width: 4),
-        Text(
-          updatedText(vehicle, status, now),
+        _UpdatedText(
+          vehicle: vehicle,
+          status: status,
           style: AppText.tabular(AppText.labelMedium).copyWith(
             fontWeight: FontWeight.w400,
             color: status == DisplayStatus.stale
@@ -214,6 +223,32 @@ class _NoDataRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// "updated 4s ago" / "last seen 2m ago", ticking every second on its own.
+class _UpdatedText extends StatelessWidget {
+  const _UpdatedText({
+    required this.vehicle,
+    required this.status,
+    required this.style,
+  });
+
+  final Vehicle vehicle;
+  final DisplayStatus status;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    final seen = vehicle.lastSeenAt;
+    if (seen == null) return Text('Never reported', style: style);
+    final live =
+        status != DisplayStatus.stale && status != DisplayStatus.offline;
+    return TimeAgoText(
+      seen,
+      prefix: live ? 'updated ' : 'last seen ',
+      style: style,
     );
   }
 }

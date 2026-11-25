@@ -3,7 +3,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
-import '../../../core/clock.dart';
+import '../../../core/realtime/ticker.dart';
+import '../../../shared/widgets/time_ago_text.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/spacing.dart';
@@ -115,7 +116,10 @@ class _VehicleMapScreenState extends ConsumerState<VehicleMapScreen> {
     final vehicles =
         ref.watch(vehicleListProvider).value?.vehicles ?? const <Vehicle>[];
     final selectedId = ref.watch(mapSelectionProvider);
-    final now = ref.watch(clockProvider)();
+    ref.watch(
+      staleVehicleIdsProvider,
+    ); // markers change shape only when staleness changes
+    final now = ref.read(tickerProvider);
     final located = vehicles.where((v) => v.hasLocation).toList();
     final withoutLocation = vehicles.length - located.length;
     final selected = selectedId == null
@@ -517,10 +521,13 @@ class VehiclePreviewPanel extends ConsumerWidget {
               ),
               _PreviewValue(
                 'Updated',
-                value(
-                  vehicle.lastSeenAt,
-                  () => timeAgo(vehicle.lastSeenAt!, now),
-                ),
+                '—',
+                live: vehicle.lastSeenAt == null
+                    ? null
+                    : TimeAgoText(
+                        vehicle.lastSeenAt!,
+                        style: _PreviewValue.valueStyle,
+                      ),
               ),
             ],
           ),
@@ -557,10 +564,17 @@ class VehiclePreviewPanel extends ConsumerWidget {
 }
 
 class _PreviewValue extends StatelessWidget {
-  const _PreviewValue(this.label, this.value);
+  const _PreviewValue(this.label, this.value, {this.live});
+
+  static final valueStyle = AppText.tabular(
+    AppText.titleSmall.copyWith(fontSize: 17),
+  );
 
   final String label;
   final String value;
+
+  /// A self-updating value (e.g. "4s ago") shown instead of [value].
+  final Widget? live;
 
   @override
   Widget build(BuildContext context) => Expanded(
@@ -579,10 +593,7 @@ class _PreviewValue extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(
-              value,
-              style: AppText.tabular(AppText.titleSmall.copyWith(fontSize: 17)),
-            ),
+            child: live ?? Text(value, style: valueStyle),
           ),
         ],
       ),

@@ -29,7 +29,7 @@ class ActivitySection extends ConsumerWidget {
       AsyncData(:final value) => SliverList.list(
         children: [
           for (var i = 0; i < value.items.length; i++)
-            ActivityRow(event: value.items[i], now: now, showTopBorder: i > 0),
+            ActivityRow(event: value.items[i], showTopBorder: i > 0),
           if (value.hasMore || value.loadMoreError != null)
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),

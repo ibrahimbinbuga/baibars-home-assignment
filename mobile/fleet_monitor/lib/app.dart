@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/auth/auth_notifier.dart';
 import 'core/auth/auth_state.dart';
+import 'core/realtime/realtime_controller.dart';
+import 'core/realtime/ticker.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/ui/login_screen.dart';
 import 'features/home/home_shell.dart';
@@ -16,6 +18,31 @@ class FleetApp extends ConsumerStatefulWidget {
 
 class _FleetAppState extends ConsumerState<FleetApp> {
   final _navigator = GlobalKey<NavigatorState>();
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    // Background: stop the connection and the ticker on purpose (no Disconnected banner).
+    // Foreground: check the session first (timers don't run while suspended), then reconnect + re-fetch.
+    _lifecycle = AppLifecycleListener(
+      onPause: () {
+        ref.read(tickerProvider.notifier).pause();
+        ref.read(realtimeControllerProvider.notifier).pause();
+      },
+      onResume: () async {
+        if (await ref.read(authProvider.notifier).checkExpiry()) return;
+        ref.read(tickerProvider.notifier).resume();
+        ref.read(realtimeControllerProvider.notifier).resume();
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

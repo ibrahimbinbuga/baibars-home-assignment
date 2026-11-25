@@ -6,18 +6,17 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/status_colors.dart';
 import '../../core/time_format.dart';
 import '../../features/activity/data/activity_event.dart';
+import 'time_ago_text.dart';
 
 /// ActivityRow(event): 64 px min height; icon in a tinted circle; absolute + relative time.
 class ActivityRow extends StatelessWidget {
   const ActivityRow({
     super.key,
     required this.event,
-    required this.now,
     this.showTopBorder = true,
   });
 
   final ActivityEvent event;
-  final DateTime now;
   final bool showTopBorder;
 
   @override
@@ -107,8 +106,8 @@ class ActivityRow extends StatelessWidget {
                   AppText.bodyMedium.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
-              Text(
-                timeAgo(event.occurredAt, now),
+              TimeAgoText(
+                event.occurredAt,
                 style: AppText.tabular(
                   AppText.labelMedium.copyWith(
                     fontWeight: FontWeight.w400,

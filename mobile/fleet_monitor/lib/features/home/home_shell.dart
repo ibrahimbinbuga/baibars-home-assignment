@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_notifier.dart';
 import '../../core/auth/auth_state.dart';
+import '../../core/realtime/realtime_controller.dart';
 import '../../core/theme/app_palette.dart';
 import '../../shared/widgets/common.dart';
+import '../../shared/widgets/connection_banner.dart';
 import '../account/ui/account_screen.dart';
 import '../vehicles/ui/vehicle_list_screen.dart';
 import '../vehicles/ui/vehicle_map_screen.dart';
@@ -17,6 +19,8 @@ class HomeShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tab = ref.watch(homeTabProvider);
+    // Watching the controller keeps the real-time connection running while the home screen exists.
+    final realtime = ref.watch(realtimeControllerProvider);
     final auth = ref.watch(authProvider).value;
     final user = auth is Authenticated ? auth.user : null;
 
@@ -34,9 +38,20 @@ class HomeShell extends ConsumerWidget {
             ),
         ],
       ),
-      body: IndexedStack(
-        index: tab.index,
-        children: const [VehicleListScreen(), VehicleMapScreen()],
+      body: Column(
+        children: [
+          ConnectionBanner(
+            state: realtime.banner,
+            disconnectedSince: realtime.disconnectedSince,
+            onRetry: ref.read(realtimeControllerProvider.notifier).retryNow,
+          ),
+          Expanded(
+            child: IndexedStack(
+              index: tab.index,
+              children: const [VehicleListScreen(), VehicleMapScreen()],
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: DecoratedBox(
         decoration: const BoxDecoration(

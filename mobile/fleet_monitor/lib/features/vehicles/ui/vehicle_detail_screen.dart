@@ -4,7 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../core/api/api_exception.dart';
-import '../../../core/clock.dart';
+import '../../../core/realtime/realtime_controller.dart';
+import '../../../core/realtime/ticker.dart';
+import '../../../shared/widgets/connection_banner.dart';
+import '../../../shared/widgets/time_ago_text.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/spacing.dart';
@@ -41,7 +44,11 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final vehicle = ref.watch(liveVehicleProvider(widget.vehicleId));
-    final now = ref.watch(clockProvider)();
+    ref.watch(
+      staleVehicleIdsProvider,
+    ); // the badge changes only when staleness changes
+    final now = ref.read(tickerProvider);
+    final realtime = ref.watch(realtimeControllerProvider);
 
     return Scaffold(
       appBar: FleetAppBar(
@@ -49,45 +56,61 @@ class _VehicleDetailScreenState extends ConsumerState<VehicleDetailScreen> {
         showBack: true,
         titleStyle: AppText.titleLarge.copyWith(fontSize: 20),
       ),
-      body: switch (vehicle) {
-        AsyncData(:final value) => CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: _Header(vehicle: value, now: now),
-            ),
-            SliverToBoxAdapter(child: _LiveMetrics(vehicle: value)),
-            SliverToBoxAdapter(
-              child: _Tabs(
-                selected: _tab,
-                onSelect: (t) => setState(() => _tab = t),
-              ),
-            ),
-            if (_tab == _DetailTab.activity)
-              ActivitySection(vehicleId: value.id, now: now)
-            else
-              HistorySection(vehicleId: value.id),
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-          ],
-        ),
-        AsyncError(:final error) => CenteredMessage(
-          icon: Icons.warning_amber_rounded,
-          iconColor: AppPalette.error,
-          iconBackground: AppPalette.errorContainer,
-          title: error is ApiException && error.isNotFound
-              ? 'Vehicle not found'
-              : 'Couldn’t load vehicle',
-          message: error is ApiException && error.isNotFound
-              ? 'It may have been removed, or it is not in your fleets.'
-              : (error is ApiException ? error.title : 'Something went wrong.'),
-          action: PrimaryAppButton(
-            label: 'Retry',
-            icon: Icons.refresh,
-            onPressed: () =>
-                ref.invalidate(vehicleDetailProvider(widget.vehicleId)),
+      body: Column(
+        children: [
+          // Under the app bar; pushes content down, never covers it.
+          ConnectionBanner(
+            state: realtime.banner,
+            disconnectedSince: realtime.disconnectedSince,
+            onRetry: ref.read(realtimeControllerProvider.notifier).retryNow,
           ),
-        ),
-        _ => const Center(child: CircularProgressIndicator()),
-      },
+          Expanded(
+            child: switch (vehicle) {
+              AsyncData(:final value) => CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: _Header(vehicle: value, now: now),
+                  ),
+                  SliverToBoxAdapter(child: _LiveMetrics(vehicle: value)),
+                  SliverToBoxAdapter(
+                    child: _Tabs(
+                      selected: _tab,
+                      onSelect: (t) => setState(() => _tab = t),
+                    ),
+                  ),
+                  if (_tab == _DetailTab.activity)
+                    ActivitySection(vehicleId: value.id, now: now)
+                  else
+                    HistorySection(vehicleId: value.id),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.lg),
+                  ),
+                ],
+              ),
+              AsyncError(:final error) => CenteredMessage(
+                icon: Icons.warning_amber_rounded,
+                iconColor: AppPalette.error,
+                iconBackground: AppPalette.errorContainer,
+                title: error is ApiException && error.isNotFound
+                    ? 'Vehicle not found'
+                    : 'Couldn’t load vehicle',
+                message: error is ApiException && error.isNotFound
+                    ? 'It may have been removed, or it is not in your fleets.'
+                    : (error is ApiException
+                          ? error.title
+                          : 'Something went wrong.'),
+                action: PrimaryAppButton(
+                  label: 'Retry',
+                  icon: Icons.refresh,
+                  onPressed: () =>
+                      ref.invalidate(vehicleDetailProvider(widget.vehicleId)),
+                ),
+              ),
+              _ => const Center(child: CircularProgressIndicator()),
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -156,19 +179,24 @@ class _Header extends StatelessWidget {
                     color: AppPalette.onSurfaceVariant,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    seen == null
-                        ? 'No data yet'
-                        : 'last update ${timeAgo(seen, now)}',
-                    style: AppText.tabular(
-                      AppText.bodyMedium.copyWith(
-                        fontWeight: seen == null
-                            ? FontWeight.w600
-                            : FontWeight.w400,
+                  if (seen == null)
+                    Text(
+                      'No data yet',
+                      style: AppText.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
                         color: AppPalette.onSurfaceVariant,
                       ),
+                    )
+                  else
+                    TimeAgoText(
+                      seen,
+                      prefix: 'last update ',
+                      style: AppText.tabular(
+                        AppText.bodyMedium.copyWith(
+                          color: AppPalette.onSurfaceVariant,
+                        ),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -311,7 +339,8 @@ class _MiniMap extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final position = LatLng(vehicle.latitude!, vehicle.longitude!);
-    final status = displayStatusOf(vehicle, ref.watch(clockProvider)());
+    ref.watch(staleVehicleIdsProvider);
+    final status = displayStatusOf(vehicle, ref.read(tickerProvider));
     return Container(
       height: 160,
       clipBehavior: Clip.antiAlias,

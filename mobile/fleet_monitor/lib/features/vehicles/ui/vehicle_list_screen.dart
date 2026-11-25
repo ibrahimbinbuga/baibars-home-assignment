@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_exception.dart';
+import '../../../core/realtime/realtime_controller.dart';
+import '../../../core/time_format.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/spacing.dart';
@@ -96,18 +98,7 @@ class _ListContent extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                Expanded(
-                  child: Text(
-                    view.countLine,
-                    key: const Key('countLine'),
-                    style: AppText.tabular(
-                      AppText.labelMedium.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: AppPalette.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                ),
+                Expanded(child: _CountLine(view: view)),
                 Text(
                   'Sorted by status',
                   style: AppText.labelMedium.copyWith(
@@ -408,4 +399,42 @@ class _ListSkeleton extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// "8 of 8 vehicles · 2 fleets" while live. While reconnecting/disconnected (ListStates 2.1/2.2) it says how old the
+/// data is instead, in amber: "Last received 14:32:10 · may be outdated" / "· not live".
+class _CountLine extends ConsumerWidget {
+  const _CountLine({required this.view});
+
+  final VehicleListView view;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final realtime = ref.watch(realtimeControllerProvider);
+    final last = realtime.lastReceivedAt;
+    final suffix = switch (realtime.status) {
+      RealtimeStatus.reconnecting => 'may be outdated',
+      RealtimeStatus.disconnected => 'not live',
+      _ => null,
+    };
+    if (suffix != null && last != null) {
+      return Text(
+        'Last received ${clockTime(last)} · $suffix',
+        key: const Key('countLine'),
+        style: AppText.tabular(
+          AppText.labelMedium.copyWith(color: AppPalette.onWarningContainer),
+        ),
+      );
+    }
+    return Text(
+      view.countLine,
+      key: const Key('countLine'),
+      style: AppText.tabular(
+        AppText.labelMedium.copyWith(
+          fontWeight: FontWeight.w400,
+          color: AppPalette.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
 }
