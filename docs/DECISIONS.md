@@ -34,6 +34,11 @@
 - **`config/devices.json` contains demo-only device keys, committed on purpose** so `docker compose up` works from a
   clean clone. In production each device is provisioned individually and keys never live in the repo.
   (TODO: same line in README, Phase 7.)
+- **TODO README (Phase 7):** state honestly that the app was verified end-to-end on the iOS simulator; Android builds
+  (`flutter build apk --debug`) but was not run on an emulator.
+- **TODO README (Phase 7):** with Flutter 3.44.3 + Xcode 27.2, `flutter build ios --simulator` fails in Flutter's own
+  framework check (it calls `lipo -verify_arch x86_64 arm64`, which Xcode 27's `lipo` no longer accepts). Use
+  `flutter run -d <simulator>` (builds only the simulator's architecture). Not a project issue; no SDK patch.
 
 ## Auth
 - **Device keys hashed with SHA-256 (unique index), not BCrypt.** Device keys are 256-bit random secrets, not
@@ -152,3 +157,27 @@
   to log in again (no refresh tokens) and reconnect.
 - **Tests use long polling** through the in-memory TestServer (WebSockets there need extra setup). Negotiate, auth,
   groups and the JSON protocol are the same; the compose smoke test covered real WebSockets.
+
+## Mobile app (foundation)
+- **Riverpod 3 without code generation**, plain `Notifier`/`AsyncNotifier`/`Provider`. Automatic provider retry is
+  turned off: errors are shown with an explicit retry, and retrying a 401/404 only repeats the failure.
+- **No router package.** The home screen follows the auth state (login vs. app), so any logout lands on login.
+  Revisit if the 5b design needs deep links or nested navigation.
+- **One `ApiClient` (dio)** that adds the token and turns every failure into a typed `ApiException` built from the
+  server's ProblemDetails. A 401 logs out, **except on `POST /api/auth/login`**, where 401 means wrong credentials and
+  429 means rate-limited.
+- **Session in secure storage** (Keychain / Android Keystore via `flutter_secure_storage`): token, `expiresAt` and the
+  user. The app restores without a network call; an expired token on start goes to login with "session expired",
+  and a timer logs out when `expiresAt` passes while the app is open. Relies on the device clock (the server's
+  30 s skew covers small drift; a badly wrong clock just causes an earlier/later logout).
+- **Unknown enum values never crash**: status, connectivity, state, activity type and role have an explicit `unknown`,
+  so a newer API can add values without breaking older app versions.
+- **Client-side filtering over the full list**: the list state holds every vehicle the user can see (already scoped by
+  the server), filters are a view on top. Live updates can then always be applied by id. Server-side filter params
+  are still available in the repository.
+- **Ordering by `updatedAt`** (see "Ordering updates on the client"): live updates and REST snapshots both keep the
+  strictly newer copy per vehicle. A snapshot decides which vehicles are listed.
+- **Cleartext HTTP only for dev hosts**: Android `network_security_config` allows it only for `10.0.2.2` and
+  `localhost` (everything else HTTPS-only); iOS uses `NSAllowsLocalNetworking`, which allows plain HTTP to local
+  addresses only. A production build would use an HTTPS API and need neither.
+- **iOS deployment target 15.0** (template had 13.0, which Xcode 27 rejects).
