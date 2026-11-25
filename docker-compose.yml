@@ -26,7 +26,7 @@ services:
     environment:
       # Production on purpose: no developer exception page. Demo features are turned on with explicit flags.
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__Fleet: "Host=db;Port=5432;Database=fleet;Username=fleet;Password=fleet_demo_password"   # demo-only
+      ConnectionStrings__Fleet: "Host=db;Port=5432;Database=fleet;Username=fleet;Password=fleet_demo_password;GSS Encryption Mode=Disable"   # demo-only
       Jwt__SigningKey: "DEMO-ONLY-compose-signing-key-replace-in-any-real-deployment"   # demo-only
       Swagger__Enabled: "true"
       Seed__Enabled: "true"

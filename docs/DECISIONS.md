@@ -13,6 +13,9 @@
   `config/devices.json` are demo-only. Production would use a secret store (e.g. environment from a vault).
 - **Fail fast on bad config.** Options are validated at startup (`ValidateOnStart`): e.g. a JWT signing key shorter
   than 32 bytes (HS256 minimum) stops the app instead of issuing weak tokens.
+- **`GSS Encryption Mode=Disable` in every connection string.** Npgsql otherwise tries to load the Kerberos library
+  (`libgssapi_krb5`), which the `aspnet` image doesn't ship, and logs a harmless but alarming error. We don't use
+  Kerberos, so turning it off is cleaner than installing a library we don't need.
 - **Postgres published on host port 5433** so `dotnet run` (appsettings.Development) can use the compose database
   without clashing with a local Postgres on 5432.
 

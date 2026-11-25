@@ -37,7 +37,8 @@ public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.UseEnvironment("Testing");
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["ConnectionStrings:Fleet"] = _postgres.GetConnectionString(),
+            // Same setting as compose: we never use Kerberos, so Npgsql should not try to load libgssapi.
+            ["ConnectionStrings:Fleet"] = _postgres.GetConnectionString() + ";GSS Encryption Mode=Disable",
             ["Jwt:SigningKey"] = TestSigningKey,
             ["Seed:Enabled"] = "true",
             ["Seed:DevicesFile"] = FindDevicesFile(),
