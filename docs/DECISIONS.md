@@ -34,8 +34,12 @@
 - **`config/devices.json` contains demo-only device keys, committed on purpose** so `docker compose up` works from a
   clean clone. In production each device is provisioned individually and keys never live in the repo.
   (TODO: same line in README, Phase 7.)
-- **TODO README (Phase 7):** state honestly that the app was verified end-to-end on the iOS simulator; Android builds
-  (`flutter build apk --debug`) but was not run on an emulator.
+- **TODO README (Phase 7):** the app is verified end-to-end against the compose backend on the **iOS simulator**
+  (`API_BASE_URL=http://localhost:8080`) **and the Android emulator** (`API_BASE_URL=http://10.0.2.2:8080`, which also
+  confirms the cleartext rule for `10.0.2.2`): wrong password, login as the Tarsus operator (exactly TR-01…TR-04),
+  session kept across an app restart, logout (also after a restart). Re-check after Phase 5b/6.
+- **TODO Phase 5b:** the login screen validates empty fields on the client, so the server's generic
+  "One or more validation errors occurred." is never shown.
 - **TODO README (Phase 7):** with Flutter 3.44.3 + Xcode 27.2, `flutter build ios --simulator` fails in Flutter's own
   framework check (it calls `lipo -verify_arch x86_64 arm64`, which Xcode 27's `lipo` no longer accepts). Use
   `flutter run -d <simulator>` (builds only the simulator's architecture). Not a project issue; no SDK patch.
