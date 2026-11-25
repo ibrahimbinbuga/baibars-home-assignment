@@ -1,5 +1,7 @@
+using System.Security.Cryptography;
 using Fleet.Api.Data;
 using Fleet.Api.Data.Entities;
+using Fleet.Api.Telemetry;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +17,9 @@ public static class TestData
     public const string TarsusFleetName = "Tarsus Field Ops";
     public const string AdanaFleetName = "Adana Field Ops";
 
+    /// <summary>Holds vehicles created by tests. No operator is assigned to it.</summary>
+    public const string TestFleetName = "Test Fleet (no operators)";
+
     public static async Task<T> WithDbAsync<T>(this FleetApiFactory factory, Func<FleetDbContext, Task<T>> action)
     {
         using var scope = factory.Services.CreateScope();
@@ -29,6 +34,37 @@ public static class TestData
 
     public static Task<Guid> FleetIdAsync(this FleetApiFactory factory, string name) =>
         factory.WithDbAsync(db => db.Fleets.Where(f => f.Name == name).Select(f => f.Id).SingleAsync());
+
+    /// <summary>Creates a fresh vehicle (no telemetry, Offline) in the test-only fleet. Returns its plaintext key.</summary>
+    public static Task<(Guid VehicleId, string DeviceKey)> CreateTestVehicleAsync(this FleetApiFactory factory) =>
+        factory.WithDbAsync(async db =>
+        {
+            var fleet = await db.Fleets.SingleOrDefaultAsync(f => f.Name == TestFleetName);
+            if (fleet is null)
+            {
+                fleet = new VehicleFleet { Id = Guid.NewGuid(), Name = TestFleetName, Region = "Test" };
+                db.Fleets.Add(fleet);
+            }
+
+            var deviceKey = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
+            var suffix = Guid.NewGuid().ToString("N")[..8];
+            var vehicle = new Vehicle
+            {
+                Id = Guid.NewGuid(),
+                FleetId = fleet.Id,
+                Name = $"TEST-{suffix}",
+                Model = "Test Rover",
+                SerialNumber = $"TEST-{suffix}",
+                DeviceKeyHash = DeviceKeyHasher.Hash(deviceKey),
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            db.Vehicles.Add(vehicle);
+            await db.SaveChangesAsync();
+            return (vehicle.Id, deviceKey);
+        });
+
+    public static RecordingFleetBroadcaster Broadcasts(this FleetApiFactory factory) =>
+        factory.Services.GetRequiredService<RecordingFleetBroadcaster>();
 
     /// <summary>Removes telemetry and activity for one vehicle so a history test starts from a known state.</summary>
     public static Task ClearHistoryAsync(this FleetApiFactory factory, Guid vehicleId) =>

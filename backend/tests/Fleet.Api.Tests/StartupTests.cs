@@ -41,7 +41,10 @@ public class StartupTests(FleetApiFactory factory)
         await scope.ServiceProvider.GetRequiredService<DbSeeder>().SeedAsync(CancellationToken.None);
 
         Assert.Equal(before, await CountsAsync(db));
-        Assert.Equal((3, 2, 8), before);
+        // Exact for users (tests never add users); fleets/vehicles may include test-only ones, so check the seeded ones.
+        Assert.Equal(3, before.Users);
+        Assert.Equal(8, await db.Vehicles.CountAsync(v => TestData.AllSeededSerials.Contains(v.SerialNumber)));
+        Assert.Equal(2, await db.Fleets.CountAsync(f => f.Name == TestData.TarsusFleetName || f.Name == TestData.AdanaFleetName));
     }
 
     private static async Task<(int Users, int Fleets, int Vehicles)> CountsAsync(FleetDbContext db) =>

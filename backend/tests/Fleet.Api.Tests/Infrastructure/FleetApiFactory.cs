@@ -1,6 +1,9 @@
+using Fleet.Api.Realtime;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 
 namespace Fleet.Api.Tests.Infrastructure;
@@ -14,14 +17,18 @@ namespace Fleet.Api.Tests.Infrastructure;
 /// - The seeded data (2 fleets, 8 vehicles, 3 users) is never deleted. Operator tests assert "exactly 4, all own
 ///   fleet"; admin tests assert "contains all 8 seeded" (not "exactly 8").
 /// - History tests write TelemetryRecord/ActivityEvent rows for one seeded vehicle and clear them first (TestData).
-/// - Vehicles created by tests (Phase 3 onwards) go into a separate test-only fleet that no operator is assigned to,
-///   so operator counts never change.
+/// - Vehicles created by tests go into a separate test-only fleet that no operator is assigned to
+///   (TestData.CreateTestVehicleAsync), so operator counts never change. Admin and fleet-list assertions use
+///   "contains the seeded ones", never exact totals.
 /// </summary>
 public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     public const string TestSigningKey = "test-signing-key-that-is-at-least-32-bytes-long";
 
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine").Build();
+
+    /// <summary>For tests that need their own connection to the test database.</summary>
+    public string ConnectionString => _postgres.GetConnectionString() + ";GSS Encryption Mode=Disable";
 
     public async Task InitializeAsync() => await _postgres.StartAsync();
 
@@ -38,13 +45,23 @@ public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(new Dictionary<string, string?>
         {
             // Same setting as compose: we never use Kerberos, so Npgsql should not try to load libgssapi.
-            ["ConnectionStrings:Fleet"] = _postgres.GetConnectionString() + ";GSS Encryption Mode=Disable",
+            ["ConnectionStrings:Fleet"] = ConnectionString,
             ["Jwt:SigningKey"] = TestSigningKey,
             ["Seed:Enabled"] = "true",
             ["Seed:DevicesFile"] = FindDevicesFile(),
             // High enough that the normal auth tests never hit the login rate limit.
             ["RateLimiting:Login:PermitLimit"] = "1000",
+            // The background offline detector would otherwise flip test vehicles Offline at random moments.
+            // Tests call OfflineDetector.DetectOnceAsync directly, with a FakeTimeProvider.
+            ["Telemetry:OfflineCheckIntervalSeconds"] = "3600",
         }));
+
+        // Records broadcasts (instead of the no-op) so tests can check what was sent and when.
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<RecordingFleetBroadcaster>();
+            services.AddSingleton<IFleetBroadcaster>(sp => sp.GetRequiredService<RecordingFleetBroadcaster>());
+        });
     }
 
     /// <summary>Creates a separate app instance (same database) with some settings overridden.</summary>

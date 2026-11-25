@@ -116,6 +116,8 @@ public class AuthTests(FleetApiFactory factory)
 
         var me = await _client.GetFromJsonAsync<MeResponse>("/api/auth/me", HttpClientExtensions.Json);
 
-        Assert.Equal(["Adana Field Ops", "Tarsus Field Ops"], me!.Fleets.Select(f => f.Name));
+        // "Contains", not exact: tests may add a test-only fleet (see FleetApiFactory).
+        Assert.Contains(me!.Fleets, f => f.Name == TestData.TarsusFleetName);
+        Assert.Contains(me.Fleets, f => f.Name == TestData.AdanaFleetName);
     }
 }
