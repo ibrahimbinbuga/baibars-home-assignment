@@ -214,4 +214,35 @@
   identifies itself (`userAgentPackageName`) and shows the attribution. Production would use a commercial or
   self-hosted tile provider, with the tile URL in configuration.
 - **No app version on Account** (would need `package_info_plus`).
-- **Screenshots** in `docs/media/` (iOS simulator full set; Android list, map, login error).
+- **Screenshots** in `docs/media/` (iOS simulator full set; Android list, map, login error; Reconnecting and
+  Disconnected banners on both platforms).
+
+## Mobile real-time (Phase 6)
+- **`RealtimeConnection` interface** over `signalr_netcore`, so the controller is tested with a fake. One connection
+  object per attempt: after it closes, a new one is created.
+- **Connect the hub first, then fetch the REST snapshot** (and merge it with the `updatedAt` rule) — on start, after
+  every automatic reconnect and after resume. Fetching first would lose updates that happen between the snapshot and
+  the connection. The app still does a fast first fetch when it opens (to show something immediately); the
+  fetch-after-connect is the authoritative one.
+- **Reconnect**: the package's automatic reconnect (0, 2, 5, 10, 30 s) after a drop, then our own retry every 30 s
+  once the connection has closed (the package doesn't retry a failed first start at all). Banner: nothing while the
+  first attempt runs or after an intentional pause; "Reconnecting…" during the automatic reconnect or a manual
+  Retry; "Disconnected – paused since HH:mm" + Retry once it closed. The count line shows "Last received HH:mm:ss ·
+  may be outdated / not live" in amber while not live.
+- **Guards**: one connection attempt at a time; the 30 s loop only after close, never during the automatic
+  reconnect; logout and pause cancel the timer and invalidate the connection; every callback checks a generation
+  number, so late events from an old or stopped connection are ignored; a refresh started just before logout does
+  not fetch afterwards. The old connection is stopped without being awaited, so a slow stop can't delay anything.
+- **Session expiry vs. network loss**: if the hub closes and the token is expired (the server closes it at `exp`),
+  the app logs out with "session expired" instead of showing Disconnected. On resume the expiry is checked first,
+  because timers don't run while the app is suspended.
+- **Lifecycle**: background → connection and ticker stopped on purpose (no banner, no retries); foreground →
+  reconnect, then re-fetch.
+- **Live activity**: `ActivityRaised` is added to an open activity feed for that vehicle, deduplicated by event id;
+  events arriving while the first page is loading are merged in afterwards. **The History tab doesn't append live**
+  (pull to refresh / reopening is enough for a 1-hour history; ~1800 rows would churn constantly).
+- **1 s ticker**: only small widgets (`TimeAgoText`, the card's accessibility label) rebuild every second. Screens
+  watch the *set of stale vehicles*, which only changes when a vehicle crosses the 30 s line, so the list/map/detail
+  don't rebuild every second.
+- **Known limitation**: a detail screen opened for a vehicle that is not in the list (only reachable through the
+  fallback fetch) doesn't update live; every normal path goes through the shared list.
