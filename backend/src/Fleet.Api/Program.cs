@@ -2,7 +2,10 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Fleet.Api.Auth;
 using Fleet.Api.Data;
+using Fleet.Api.Realtime;
+using Fleet.Api.Telemetry;
 using Fleet.Api.Vehicles;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +45,10 @@ builder.Services.AddOptions<JwtOptions>()
         $"Jwt:SigningKey must be at least {JwtOptions.MinimumSigningKeyBytes} bytes for HS256.")
     .ValidateOnStart();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+// JWT is the default scheme (users). Devices use their own scheme, only on the ingest endpoint.
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer()
+    .AddScheme<AuthenticationSchemeOptions, DeviceKeyAuthenticationHandler>(DeviceKeyAuthenticationHandler.SchemeName, null);
 builder.Services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
     .Configure<IOptions<JwtOptions>>((bearer, jwtOptions) =>
     {
@@ -71,6 +77,17 @@ builder.Services.AddScoped<JwtTokenIssuer>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IVehicleAccessService, VehicleAccessService>();
 builder.Services.AddScoped<VehicleQueryService>();
+
+// --- Telemetry & real-time ---
+builder.Services.AddOptions<TelemetryOptions>()
+    .Bind(builder.Configuration.GetSection(TelemetryOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
+builder.Services.AddScoped<TelemetryIngestionService>();
+builder.Services.AddScoped<OfflineDetector>();
+builder.Services.AddHostedService<OfflineDetectorService>();
+builder.Services.AddScoped<FleetChangePublisher>();
+builder.Services.AddSingleton<IFleetBroadcaster, NoOpFleetBroadcaster>();
 
 builder.Services.AddHealthChecks().AddDbContextCheck<FleetDbContext>();
 
