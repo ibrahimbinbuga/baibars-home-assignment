@@ -1,0 +1,7 @@
+# Host build outputs would overwrite the container's restore/build results.
+**/bin/
+**/obj/
+**/.vs/
+**/.idea/
+**/*.user
+tests/
