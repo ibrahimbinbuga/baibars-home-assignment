@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend (dotnet test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: backend/global.json
+
+      # The tests start a real PostgreSQL with Testcontainers; ubuntu-latest runners have Docker.
+      - name: Test
+        working-directory: backend
+        run: dotnet test
+
+  mobile:
+    name: Mobile (analyze + test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile/fleet_monitor
+    steps:
+      - uses: actions/checkout@v5
+
+      # Same version the app was built and tested with (README "Tested with").
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.3
+          cache: true
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test

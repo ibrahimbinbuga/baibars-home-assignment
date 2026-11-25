@@ -1,5 +1,7 @@
 # Fleet Monitor
 
+[![CI](https://github.com/ibrahimbinbuga/baibars-home-assignment/actions/workflows/ci.yml/badge.svg)](https://github.com/ibrahimbinbuga/baibars-home-assignment/actions/workflows/ci.yml)
+
 **Demo video (1:54, silent, 1.5× speed):** [docs/media/demo.mp4](docs/media/demo.mp4) — Tarsus operator logs in, live
 list, map, vehicle detail, simulator stopped → vehicles go Offline → back Online, API restarted → Reconnecting → recovers.
 
