@@ -212,7 +212,15 @@ class RealtimeController extends Notifier<RealtimeState> {
     // not a network problem.
     final auth = ref.read(authProvider).value;
     if (auth is Authenticated && !_now.isBefore(auth.expiresAt)) {
+      _retryTimer?.cancel();
       ref.read(authProvider.notifier).logout(LogoutReason.sessionExpired);
+      return;
+    }
+    // 401 on (re)connect: the server no longer accepts the token (e.g. the user was deleted). Same as a 401 on a
+    // REST call: log out, no Disconnected banner, no retries. Network errors and 5xx fall through to the retry.
+    if (error is RealtimeUnauthorized) {
+      _retryTimer?.cancel();
+      ref.read(authProvider.notifier).logout(LogoutReason.unauthorized);
       return;
     }
     state = RealtimeState(

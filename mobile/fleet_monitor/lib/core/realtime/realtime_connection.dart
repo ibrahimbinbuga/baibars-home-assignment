@@ -27,7 +27,17 @@ class LinkReconnected extends LinkEvent {
 class LinkClosed extends LinkEvent {
   const LinkClosed([this.error]);
 
+  /// [RealtimeUnauthorized] when the server rejected our token while reconnecting.
   final Object? error;
+}
+
+/// The server answered a (re)connect with 401: the token is no longer accepted (e.g. the user was deleted).
+/// Unlike a network error or a 5xx, retrying can't help, so the controller logs out.
+class RealtimeUnauthorized implements Exception {
+  const RealtimeUnauthorized();
+
+  @override
+  String toString() => 'RealtimeUnauthorized: the hub rejected the token (401)';
 }
 
 /// One real-time connection to the hub. An interface so the controller can be tested with a fake.
@@ -37,7 +47,8 @@ abstract interface class RealtimeConnection {
   Stream<ActivityEvent> get activityEvents;
   Stream<LinkEvent> get linkEvents;
 
-  /// Throws if the connection can't be established (network, 401, ...).
+  /// Throws if the connection can't be established: [RealtimeUnauthorized] on 401, anything else for network
+  /// errors, 5xx, ...
   Future<void> start();
   Future<void> stop();
 }
