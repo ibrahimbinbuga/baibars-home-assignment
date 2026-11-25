@@ -41,8 +41,9 @@ public class StartupTests(FleetApiFactory factory)
         await scope.ServiceProvider.GetRequiredService<DbSeeder>().SeedAsync(CancellationToken.None);
 
         Assert.Equal(before, await CountsAsync(db));
-        // Exact for users (tests never add users); fleets/vehicles may include test-only ones, so check the seeded ones.
-        Assert.Equal(3, before.Users);
+        // Tests may add their own users, fleets and vehicles, so check the seeded ones by their natural keys.
+        string[] seededEmails = [DemoUsers.AdminEmail, DemoUsers.TarsusOperatorEmail, DemoUsers.AdanaOperatorEmail];
+        Assert.Equal(3, await db.Users.CountAsync(u => seededEmails.Contains(u.Email)));
         Assert.Equal(8, await db.Vehicles.CountAsync(v => TestData.AllSeededSerials.Contains(v.SerialNumber)));
         Assert.Equal(2, await db.Fleets.CountAsync(f => f.Name == TestData.TarsusFleetName || f.Name == TestData.AdanaFleetName));
     }

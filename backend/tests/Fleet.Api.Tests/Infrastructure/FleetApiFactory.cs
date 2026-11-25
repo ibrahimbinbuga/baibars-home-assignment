@@ -48,7 +48,7 @@ public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             ["ConnectionStrings:Fleet"] = ConnectionString,
             ["Jwt:SigningKey"] = TestSigningKey,
             ["Seed:Enabled"] = "true",
-            ["Seed:DevicesFile"] = FindDevicesFile(),
+            ["Seed:DevicesFile"] = DevicesFilePath,
             // High enough that the normal auth tests never hit the login rate limit.
             ["RateLimiting:Login:PermitLimit"] = "1000",
             // The background offline detector would otherwise flip test vehicles Offline at random moments.
@@ -56,7 +56,7 @@ public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
             ["Telemetry:OfflineCheckIntervalSeconds"] = "3600",
         }));
 
-        // Records broadcasts (instead of the no-op) so tests can check what was sent and when.
+        // Records broadcasts (and forwards them to the real SignalR broadcaster) so tests can check what was sent and when.
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<RecordingFleetBroadcaster>();
@@ -69,7 +69,10 @@ public class FleetApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
         WithWebHostBuilder(builder =>
             builder.ConfigureAppConfiguration((_, config) => config.AddInMemoryCollection(settings)));
 
-    // The tests use the same config/devices.json as docker-compose, found by walking up from the test output folder.
+    /// <summary>The same config/devices.json as docker-compose (holds the seeded vehicles' plaintext demo keys).</summary>
+    public static string DevicesFilePath { get; } = FindDevicesFile();
+
+    // Found by walking up from the test output folder.
     private static string FindDevicesFile()
     {
         for (var dir = new DirectoryInfo(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)

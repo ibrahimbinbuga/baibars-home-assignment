@@ -14,7 +14,8 @@ namespace Fleet.Api.Tests.Infrastructure;
 /// </param>
 public record BroadcastRecord(string Method, Guid VehicleId, object Payload, bool CommittedWhenSent);
 
-public class RecordingFleetBroadcaster(IServiceScopeFactory scopeFactory) : IFleetBroadcaster
+/// <summary>Records every broadcast, then forwards it to the real SignalR broadcaster, so tests also cover delivery.</summary>
+public class RecordingFleetBroadcaster(IServiceScopeFactory scopeFactory, SignalRFleetBroadcaster inner) : IFleetBroadcaster
 {
     private readonly ConcurrentQueue<BroadcastRecord> _records = new();
 
@@ -25,12 +26,14 @@ public class RecordingFleetBroadcaster(IServiceScopeFactory scopeFactory) : IFle
         var committed = await IsVisibleAsync(db => db.Vehicles.AnyAsync(v =>
             v.Id == vehicle.Id && v.LastSeenAt == vehicle.LastSeenAt && v.Connectivity == vehicle.Connectivity));
         _records.Enqueue(new BroadcastRecord("VehicleUpdated", vehicle.Id, vehicle, committed));
+        await inner.VehicleUpdatedAsync(vehicle, cancellationToken);
     }
 
-    public async Task ActivityRaisedAsync(ActivityEventDto activityEvent, CancellationToken cancellationToken)
+    public async Task ActivityRaisedAsync(Guid fleetId, ActivityEventDto activityEvent, CancellationToken cancellationToken)
     {
         var committed = await IsVisibleAsync(db => db.ActivityEvents.AnyAsync(e => e.Id == activityEvent.Id));
         _records.Enqueue(new BroadcastRecord("ActivityRaised", activityEvent.VehicleId, activityEvent, committed));
+        await inner.ActivityRaisedAsync(fleetId, activityEvent, cancellationToken);
     }
 
     // A new scope = a new DbContext = a different pooled connection from the one doing the ingestion.

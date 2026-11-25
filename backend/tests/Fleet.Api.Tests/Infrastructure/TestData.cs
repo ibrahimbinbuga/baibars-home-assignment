@@ -1,4 +1,6 @@
 using System.Security.Cryptography;
+using System.Text.Json;
+using Fleet.Api.Auth;
 using Fleet.Api.Data;
 using Fleet.Api.Data.Entities;
 using Fleet.Api.Telemetry;
@@ -61,6 +63,55 @@ public static class TestData
             db.Vehicles.Add(vehicle);
             await db.SaveChangesAsync();
             return (vehicle.Id, deviceKey);
+        });
+
+    /// <summary>Plaintext demo device key of a seeded vehicle, read from config/devices.json.</summary>
+    public static string SeededDeviceKey(string serialNumber)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(FleetApiFactory.DevicesFilePath));
+        return document.RootElement.GetProperty("vehicles").EnumerateArray()
+            .Single(v => v.GetProperty("serialNumber").GetString() == serialNumber)
+            .GetProperty("deviceKey").GetString()!;
+    }
+
+    /// <summary>
+    /// Puts a seeded vehicle back exactly as the seeder left it: Offline, no latest state, no history.
+    /// For tests that ingest into seeded vehicles, so other tests can keep assuming "freshly seeded".
+    /// </summary>
+    public static async Task ResetSeededVehicleAsync(this FleetApiFactory factory, string serialNumber)
+    {
+        var vehicleId = await factory.VehicleIdAsync(serialNumber);
+        await factory.ClearHistoryAsync(vehicleId);
+        await factory.WithDbAsync(db => db.Vehicles.Where(v => v.Id == vehicleId).ExecuteUpdateAsync(s => s
+            .SetProperty(v => v.Connectivity, Connectivity.Offline)
+            .SetProperty(v => v.LastLatitude, (double?)null)
+            .SetProperty(v => v.LastLongitude, (double?)null)
+            .SetProperty(v => v.LastSpeedKmh, (double?)null)
+            .SetProperty(v => v.LastHeadingDeg, (double?)null)
+            .SetProperty(v => v.LastBatteryPct, (double?)null)
+            .SetProperty(v => v.LastReportedState, (VehicleState?)null)
+            .SetProperty(v => v.LastTelemetryAt, (DateTimeOffset?)null)
+            .SetProperty(v => v.LastSeenAt, (DateTimeOffset?)null)
+            .SetProperty(v => v.LastSequence, (long?)null)));
+    }
+
+    /// <summary>Creates a user (tests only). Operators get access to exactly the given fleets.</summary>
+    public static Task CreateUserAsync(
+        this FleetApiFactory factory, string email, string password, Role role, params Guid[] fleetIds) =>
+        factory.WithDbAsync(async db =>
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = AuthService.NormalizeEmail(email),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password, AuthService.BcryptWorkFactor),
+                DisplayName = "Test user",
+                Role = role,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            user.FleetAccess.AddRange(fleetIds.Select(id => new UserFleetAccess { UserId = user.Id, FleetId = id }));
+            db.Users.Add(user);
+            await db.SaveChangesAsync();
         });
 
     public static RecordingFleetBroadcaster Broadcasts(this FleetApiFactory factory) =>
