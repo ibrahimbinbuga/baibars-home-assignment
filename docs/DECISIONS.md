@@ -19,14 +19,18 @@
 ## Data
 - **Migrations at startup** (hosted service, before the server accepts requests). Fine for a single instance.
   TODO: with several instances they would race to apply the same migration; production would run migrations as a
-  separate deploy step (EF migration bundle / pipeline job).
+  separate deploy step (EF migration bundle / pipeline job). The seeder has the same race: two instances could both
+  see "no users" and the second would fail on the unique email index. Seeding would also move to that one-off step
+  (and in production there is no demo seed at all).
 - **Enums stored as text** so the database is readable without the code.
 - **`xmin` as concurrency token on `Vehicle`** (Postgres system column, no extra column).
 - **Seeder is idempotent** (skips if any user exists) and writes everything in one `SaveChanges` (one transaction).
 - **Entity named `VehicleFleet`**, not `Fleet`: a type named `Fleet` clashes with the root namespace `Fleet`.
   Table and API still say "fleet".
 - **Single `config/devices.json`** is the source for both the seeder (stores hashes) and the simulator (sends keys).
-  In production each device would be provisioned individually.
+- **`config/devices.json` contains demo-only device keys, committed on purpose** so `docker compose up` works from a
+  clean clone. In production each device is provisioned individually and keys never live in the repo.
+  (TODO: same line in README, Phase 7.)
 
 ## Auth
 - **Device keys hashed with SHA-256 (unique index), not BCrypt.** Device keys are 256-bit random secrets, not
