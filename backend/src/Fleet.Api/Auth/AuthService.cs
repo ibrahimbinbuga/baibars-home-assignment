@@ -11,9 +11,11 @@ public class AuthService(FleetDbContext db, JwtTokenIssuer tokenIssuer, IVehicle
 
     // Used when the email is unknown, so that case still pays for one BCrypt.Verify.
     // Without it, "unknown email" would answer much faster than "wrong password" and reveal which emails exist.
-    // Computed once per process, with the same work factor as real hashes so the verify time matches.
-    private static readonly string DummyPasswordHash =
-        BCrypt.Net.BCrypt.HashPassword("dummy-password-for-timing", BcryptWorkFactor);
+    // It is a precomputed constant (not hashed at runtime) so that even the first unknown-email login after a
+    // restart costs exactly one verify, like a real one. The "$2a$11$" prefix means work factor 11, which must stay
+    // equal to BcryptWorkFactor; a test checks this. The plaintext was random and thrown away, so the hash is not
+    // a secret (public only so that test can read it).
+    public const string DummyPasswordHash = "$2a$11$cf9Yk1kVoASLDdxWOpamFerlaP/CApsSSrMIki0YIgsh96pQ8nVuW";
 
     public static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 

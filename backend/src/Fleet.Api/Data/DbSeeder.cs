@@ -39,14 +39,18 @@ public class DbSeeder(
         db.Fleets.AddRange(fleets.Values);
 
         // Demo-only passwords, documented in the README.
-        db.Users.AddRange(
+        User[] users =
+        [
             CreateUser("admin@demo.local", "Admin123!", "Demo Admin", Role.Admin, [], now),
             CreateUser("tarsus.operator@demo.local", "Operator123!", "Tarsus Operator", Role.Operator,
                 [fleets[TarsusFleet]], now),
             CreateUser("adana.operator@demo.local", "Operator123!", "Adana Operator", Role.Operator,
-                [fleets[AdanaFleet]], now));
+                [fleets[AdanaFleet]], now),
+        ];
+        db.Users.AddRange(users);
 
-        foreach (var device in await ReadDevicesAsync(cancellationToken))
+        var devices = await ReadDevicesAsync(cancellationToken);
+        foreach (var device in devices)
         {
             if (!fleets.TryGetValue(device.Fleet, out var fleet))
             {
@@ -70,7 +74,8 @@ public class DbSeeder(
 
         // One SaveChanges = one transaction, so a failed seed leaves no half-seeded database behind.
         await db.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Seeded {FleetCount} fleets, 3 users and demo vehicles", fleets.Count);
+        logger.LogInformation("Seeded {FleetCount} fleets, {UserCount} users and {VehicleCount} vehicles",
+            fleets.Count, users.Length, devices.Count);
     }
 
     private static User CreateUser(
