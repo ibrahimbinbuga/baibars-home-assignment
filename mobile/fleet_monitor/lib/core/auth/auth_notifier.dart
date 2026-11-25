@@ -28,15 +28,21 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
     if (stored == null) return const Unauthenticated();
     if (!_now().isBefore(stored.expiresAt)) {
       await _storage.clear();
-      return const Unauthenticated(LogoutReason.sessionExpired);
+      return Unauthenticated(LogoutReason.sessionExpired, stored.user.email);
     }
     return _startSession(stored);
   }
 
   /// Throws ApiException on failure (wrong credentials, rate limited, network); the login screen shows it.
   Future<void> login(String email, String password) async {
-    final response = await ref.read(authRepositoryProvider).login(email.trim(), password);
-    final session = StoredSession(accessToken: response.accessToken, expiresAt: response.expiresAt, user: response.user);
+    final response = await ref
+        .read(authRepositoryProvider)
+        .login(email.trim(), password);
+    final session = StoredSession(
+      accessToken: response.accessToken,
+      expiresAt: response.expiresAt,
+      user: response.user,
+    );
     await _storage.write(session);
     state = AsyncData(_startSession(session));
   }
@@ -44,20 +50,35 @@ class AuthNotifier extends AsyncNotifier<AuthState> {
   Future<void> logout(LogoutReason reason) async {
     _expiryTimer?.cancel();
     // Several requests can fail with 401 at once; only the first one logs out (and keeps its reason).
-    if (state.value is Unauthenticated) return;
-    state = AsyncData(Unauthenticated(reason));
+    final current = state.value;
+    if (current is! Authenticated) return;
+    state = AsyncData(
+      Unauthenticated(
+        reason,
+        reason == LogoutReason.userRequested ? null : current.user.email,
+      ),
+    );
     await _storage.clear();
   }
 
   Authenticated _startSession(StoredSession session) {
     _expiryTimer?.cancel();
     // No refresh tokens: when the token expires the user has to log in again (the server would reject it anyway).
-    _expiryTimer = Timer(session.expiresAt.difference(_now()), () => logout(LogoutReason.sessionExpired));
-    return Authenticated(user: session.user, accessToken: session.accessToken, expiresAt: session.expiresAt);
+    _expiryTimer = Timer(
+      session.expiresAt.difference(_now()),
+      () => logout(LogoutReason.sessionExpired),
+    );
+    return Authenticated(
+      user: session.user,
+      accessToken: session.accessToken,
+      expiresAt: session.expiresAt,
+    );
   }
 }
 
-final authProvider = AsyncNotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthState>(
+  AuthNotifier.new,
+);
 
 /// Id of the logged-in user, or null. Data providers watch this so they reset when the user changes or logs out.
 final currentUserIdProvider = Provider<String?>((ref) {

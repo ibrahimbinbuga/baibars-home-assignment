@@ -20,15 +20,21 @@ class ApiException implements Exception {
     this.statusCode,
     this.detail,
     this.fieldErrors = const {},
+    this.retryAfter,
   });
 
-  factory ApiException.fromProblem(int statusCode, ProblemDetails? problem) => ApiException(
-        kind: ApiErrorKind.http,
-        statusCode: statusCode,
-        title: problem?.title ?? 'Request failed ($statusCode)',
-        detail: problem?.detail,
-        fieldErrors: problem?.errors ?? const {},
-      );
+  factory ApiException.fromProblem(
+    int statusCode,
+    ProblemDetails? problem, {
+    Duration? retryAfter,
+  }) => ApiException(
+    kind: ApiErrorKind.http,
+    statusCode: statusCode,
+    title: problem?.title ?? 'Request failed ($statusCode)',
+    detail: problem?.detail,
+    fieldErrors: problem?.errors ?? const {},
+    retryAfter: retryAfter,
+  );
 
   final ApiErrorKind kind;
   final int? statusCode;
@@ -36,10 +42,14 @@ class ApiException implements Exception {
   final String? detail;
   final Map<String, List<String>> fieldErrors;
 
+  /// From the Retry-After header (429): how long to wait before trying again.
+  final Duration? retryAfter;
+
   bool get isUnauthorized => statusCode == 401;
   bool get isNotFound => statusCode == 404;
   bool get isRateLimited => statusCode == 429;
 
   @override
-  String toString() => 'ApiException($kind, $statusCode, $title${detail == null ? '' : ': $detail'})';
+  String toString() =>
+      'ApiException($kind, $statusCode, $title${detail == null ? '' : ': $detail'})';
 }
