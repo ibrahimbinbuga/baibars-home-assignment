@@ -8,6 +8,7 @@ using Fleet.Api.Tests.Infrastructure;
 using Fleet.Api.Vehicles;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -144,7 +145,9 @@ public class FleetHubTests(FleetApiFactory factory) : IAsyncLifetime
         // CloseOnAuthenticationExpiration uses the token's exp (JwtBearer copies ValidTo into ExpiresUtc). ClockSkew
         // (30 s) only applies when a token is validated, not to an open connection. The 15 s timeout is shorter than
         // the skew, so this test would fail if the skew were added.
-        var token = CreateToken(await factory.VehicleIdAsync(TarsusSerial), lifetime: TimeSpan.FromSeconds(3));
+        var adminId = await factory.WithDbAsync(db =>
+            db.Users.Where(u => u.Email == DemoUsers.AdminEmail).Select(u => u.Id).SingleAsync());
+        var token = CreateToken(adminId, lifetime: TimeSpan.FromSeconds(3));
         var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         await using var hub = await HubTestClient.ConnectAsync(factory, token);
         hub.Connection.Closed += _ => { closed.TrySetResult(); return Task.CompletedTask; };
@@ -154,7 +157,7 @@ public class FleetHubTests(FleetApiFactory factory) : IAsyncLifetime
         Assert.Equal(HubConnectionState.Disconnected, hub.Connection.State);
     }
 
-    // A token for a user id that may not exist is fine here: the hub only needs a valid signature and claims.
+    // Signed like a real token, but with a chosen lifetime. The subject must be an existing user (checked on connect).
     private static string CreateToken(Guid subject, TimeSpan lifetime)
     {
         var now = DateTime.UtcNow;
