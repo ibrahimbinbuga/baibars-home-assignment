@@ -117,3 +117,27 @@
   503 after retries at Warning. EF Core and ASP.NET Core framework logs at Warning (migrations at Information).
 - Simulator: each send at Debug; startup, state changes, dropout start/end at Information; retries at Warning;
   rejected samples at Error.
+
+## Real-time (SignalR hub)
+- **Strongly typed hub (`Hub<IFleetClient>`) with no client → server methods.** Group membership is decided in
+  `OnConnectedAsync` from `IVehicleAccessService`, the same rule as REST. A client cannot ask to join a fleet, so the
+  real-time channel can't leak data across fleets. Access changes apply on the next connection (acceptable for the
+  demo; production would remove a user from groups when their access is revoked).
+- **Sends go to `fleet:{fleetId}` groups only**, through `IHubContext<FleetHub, IFleetClient>` behind
+  `IFleetBroadcaster`, after commit.
+- **Same JSON settings for REST and SignalR** (`JsonConfiguration.Apply`), so the app parses one `VehicleDto` shape.
+- **Hub accepts only the JWT scheme.** Device keys can't connect.
+- **`access_token` query parameter accepted only on `/hubs/fleet`.** WebSocket clients can't always set headers; on
+  every other path a token in the URL is ignored, so tokens don't spread into URLs.
+- **Tokens in the hub URL are not logged.** Checked: ASP.NET Core request logs (which include the query string) are
+  at Information, and the `Microsoft.AspNetCore` category is configured at Warning; SignalR/connection/Kestrel logs
+  that mention connections are Debug/Trace. After a WebSocket session on compose, the API logs contained no
+  `access_token`, `/hubs/` or JWT text. If request logging is ever turned on, the query string must be redacted
+  first. A reverse proxy in front would need the same care.
+- **`CloseOnAuthenticationExpiration = true`.** Without it an open connection keeps receiving data after the JWT
+  expires. It closes at the token's `exp`: JwtBearer copies `exp` into the authentication properties and the
+  connection layer checks it about once per second. `ClockSkew` (30 s) only applies when a token is validated, so it
+  does not extend an open connection (a test with a 3 s token closes in ~5 s, well under the skew). The app then has
+  to log in again (no refresh tokens) and reconnect.
+- **Tests use long polling** through the in-memory TestServer (WebSockets there need extra setup). Negotiate, auth,
+  groups and the JSON protocol are the same; the compose smoke test covered real WebSockets.

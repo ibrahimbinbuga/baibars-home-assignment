@@ -5,8 +5,6 @@ Base URL: `http://localhost:8080`. JSON is camelCase; enums are strings. Errors 
 
 All endpoints require `Authorization: Bearer <accessToken>` unless marked **anonymous**.
 
-> The SignalR hub section is added in Phase 4.
-
 ## Health
 
 ### `GET /health` — anonymous
@@ -162,3 +160,28 @@ Processing rules:
   - `FaultRaised` when the state changes into `Fault`
   - `LowBattery` when the battery drops from ≥ 20 % (or unknown) to below 20 %; again only after it recovers to ≥ 20 %
 - Real-time updates (`VehicleUpdated`, `ActivityRaised`) are sent only after the data is committed.
+
+## Real-time (SignalR)
+
+### Hub `/hubs/fleet`
+- **Auth:** user JWT only. Pass it as the `access_token` query parameter (what SignalR clients do for WebSockets) or
+  as an `Authorization: Bearer` header. The query parameter is accepted **only** on `/hubs/fleet`. A device key cannot
+  connect. No or invalid token → `401` on negotiate.
+- **Protocol:** JSON with the same settings as the REST API: camelCase properties, enums as strings.
+- **Server → client only.** There are no methods a client can call.
+- **Groups are decided by the server** when the connection opens: one group per fleet the user can see (admin: all;
+  operator: assigned fleets). A user with no fleets stays connected and receives nothing. If a user's access changes,
+  it applies on their next connection.
+- **Token expiry closes the connection** (at the token's `exp`). The client should log in again (there are no refresh
+  tokens) and reconnect.
+
+### Messages
+
+| Method | Payload | Sent when |
+|---|---|---|
+| `VehicleUpdated` | `VehicleDto` (same as `GET /api/vehicles/{id}`) | After a telemetry sample is stored, and when a vehicle goes Offline |
+| `ActivityRaised` | `{ "id", "vehicleId", "type", "occurredAt", "details" }` (same as an activity item) | When an activity event is created |
+
+Each message goes only to the group of the vehicle's fleet, and only after the change is committed.
+Messages are not replayed: after a reconnect, re-fetch `GET /api/vehicles` (and the open vehicle's activity) to catch
+up on anything missed while disconnected.
