@@ -49,3 +49,22 @@
   only (`RateLimiting:Login:*`, default 5 per 60 s), 429 as ProblemDetails.
   Behind a reverse proxy the client IP would come from `X-Forwarded-For` (`UseForwardedHeaders` with the proxy
   configured as trusted); without that, every client would share the proxy's IP and one limit.
+
+## Vehicles API
+- **Access check lives in one place.** `VehicleQueryService` starts every vehicle query from
+  `IVehicleAccessService.ScopeVehicles`; controllers never filter. Out of scope and nonexistent give the same 404
+  (A10). A `fleetId` filter is applied *after* scoping, so an out-of-scope fleet returns `200 []` and can't be used
+  to probe which fleets exist.
+- **One status expression.** `VehicleProjections.ToDto` is the only place the user-facing status is derived. The
+  `?status=` filter runs on the projected DTO (EF translates a filter after a member-init projection), so the list and
+  the filter can't disagree.
+- **Read queries project straight to DTOs** (`AsNoTracking` + `Select`): one SQL statement per request, `fleetName`
+  via a join, no `Include`.
+- **Telemetry window capped at 7 days** (400 above that) and `limit` clamped to 2000: bounds the cost of one request.
+  `limit < 1` is a 400 rather than silently becoming 1.
+- **Activity uses keyset pagination with an opaque cursor** over (`OccurredAt`, `Id`), not offset paging (stable while
+  new events arrive) and not a bare timestamp (events created in one ingestion share a timestamp and would be skipped
+  at page boundaries). The cursor truncates to microseconds, Postgres' `timestamptz` precision, so it compares equal
+  to stored values. It is not signed: a modified cursor can only move within the caller's own scoped data, and a
+  malformed one is a 400.
+- **Timestamps from query strings are converted to UTC** before querying (Npgsql only accepts UTC for `timestamptz`).
