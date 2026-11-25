@@ -38,8 +38,8 @@
   (`API_BASE_URL=http://localhost:8080`) **and the Android emulator** (`API_BASE_URL=http://10.0.2.2:8080`, which also
   confirms the cleartext rule for `10.0.2.2`): wrong password, login as the Tarsus operator (exactly TR-01…TR-04),
   session kept across an app restart, logout (also after a restart). Re-check after Phase 5b/6.
-- **TODO Phase 5b:** the login screen validates empty fields on the client, so the server's generic
-  "One or more validation errors occurred." is never shown.
+- **Done in 5b:** the login screen validates empty fields on the client (button disabled until both have text;
+  keyboard submit shows "Enter your email/password"), so the server's generic validation message never shows.
 - **TODO README (Phase 7):** with Flutter 3.44.3 + Xcode 27.2, `flutter build ios --simulator` fails in Flutter's own
   framework check (it calls `lipo -verify_arch x86_64 arm64`, which Xcode 27's `lipo` no longer accepts). Use
   `flutter run -d <simulator>` (builds only the simulator's architecture). Not a project issue; no SDK patch.
@@ -185,3 +185,33 @@
   `localhost` (everything else HTTPS-only); iOS uses `NSAllowsLocalNetworking`, which allows plain HTTP to local
   addresses only. A production build would use an HTTPS API and need neither.
 - **iOS deployment target 15.0** (template had 13.0, which Xcode 27 rejects).
+
+## Mobile UI (Phase 5b, design in docs/design/)
+- **Theme from the design tokens**: Material 3 `ColorScheme` with an ink primary (status colours own the colour
+  channel), a `StatusColors` ThemeExtension (foreground + tint per status, incl. stale), the Inter type scale, spacing
+  and radius constants. Every status is colour + icon + label, never colour alone.
+- **Inter bundled as a font asset** (OFL 1.1, official rsms/inter v4.1 static TTFs) instead of `google_fonts`: no
+  runtime download, works offline, and the app doesn't contact Google on start. Tabular figures for all live values.
+- **Built-in Material icons** instead of the design's SVG paths: no SVG/path package; close but not identical.
+  Map markers are CustomPainter shapes (circle / rounded square / diamond / triangle) so status reads without colour.
+- **"Stale" is computed on the client**: online but `lastSeenAt` older than 30 s (the server's offline threshold).
+  The server's status stays authoritative; stale only covers the gap before its Offline message arrives. In 5b
+  (REST only, no live updates) a snapshot older than 30 s therefore shows as stale until refreshed — intended; Phase 6
+  adds live updates and a periodic re-check.
+- **Filters on the device over the full scoped list**; the summary counts follow the fleet filter only (status filter
+  doesn't change them), as in the design. Sorted Fault → Moving → Idle → Charging → Stale → Offline (reported first),
+  then name.
+- **Detail reads the vehicle from the shared list state** (falls back to `GET /vehicles/{id}`), so list and detail
+  always agree and Phase 6 updates reach both.
+- **"Open in map" switches to the app's own Map tab** with the vehicle selected and centred (no external maps app).
+  Tapping a marker only selects it (no camera jump); only an external selection moves the camera.
+- **History**: the list shows every sample (~1800 per hour) with gap rows where the vehicle was offline (> 30 s
+  without samples). The chart is a CustomPainter (no chart package) and plots per-minute averages, because raw 2 s
+  samples are too noisy to read; lines break at offline gaps.
+- **Rate-limit countdown** from the `Retry-After` header (fallback 60 s). The fixed-window limiter reports the full
+  window length, so the countdown is an upper bound, never too short.
+- **OSM public tile servers are for the demo only.** Their usage policy doesn't allow heavy or commercial use. The app
+  identifies itself (`userAgentPackageName`) and shows the attribution. Production would use a commercial or
+  self-hosted tile provider, with the tile URL in configuration.
+- **No app version on Account** (would need `package_info_plus`).
+- **Screenshots** in `docs/media/` (iOS simulator full set; Android list, map, login error).

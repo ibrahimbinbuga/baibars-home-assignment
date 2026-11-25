@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor · Account</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1E293B}a:hover{color:#0F172A}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sec{font-size:13px;font-weight:700;color:#4B5563;letter-spacing:.04em;text-transform:uppercase;margin:0 0 8px}
+</style>
+</helmet>
+<div style="width: 820px; height: 904px; display: flex; gap: 40px; align-items: flex-start">
+  <sc-for list="{{phones}}" as="p" hint-placeholder-count="2">
+    <div style="width: 390px; flex: none; display: flex; flex-direction: column">
+      <div style="height: 48px">
+        <div style="font-size: 16px; font-weight: 700">{{p.title}}</div>
+        <div style="font-size: 13px; color: #4B5563">{{p.note}}</div>
+      </div>
+      <div style="width: 390px; height: 844px; background: #F4F5F2; display: flex; flex-direction: column; overflow: hidden; border-radius: 4px; outline: 1px solid #C9CED4">
+        <header style="height: 64px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 16px 0 4px; background: #FFFFFF; border-bottom: 1px solid #D5D9DE">
+          <a href="Main.dc.html" aria-label="Back" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #111827"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 24px; height: 24px"><path d="M15 18l-6-6 6-6"></path></svg></a>
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700">Account</h2>
+        </header>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 24px; padding: 24px 16px">
+          <div style="display: flex; align-items: center; gap: 16px">
+            <span style="width: 64px; height: 64px; border-radius: 32px; background: #1E293B; color: #FFFFFF; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none">{{p.initials}}</span>
+            <div style="min-width: 0">
+              <div style="font-size: 22px; font-weight: 700; line-height: 28px">{{p.name}}</div>
+              <div style="font-size: 15px; color: #4B5563">{{p.email}}</div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="sec">Role</h3>
+            <div style="background: #FFFFFF; border: 1px solid #D5D9DE; border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px">
+              <span style="height: 30px; padding: 0 10px; border-radius: 6px; background: #1E293B; color: #FFFFFF; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6l-8-3Z"></path></svg>{{p.role}}</span>
+              <span style="font-size: 14px; color: #374151; line-height: 20px">{{p.roleNote}}</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="sec">Accessible fleets</h3>
+            <div style="background: #FFFFFF; border: 1px solid #D5D9DE; border-radius: 12px; overflow: hidden">
+              <sc-for list="{{p.fleets}}" as="f" hint-placeholder-count="2">
+                <div style="min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: {{f.border}}">
+                  <span style="width: 40px; height: 40px; border-radius: 10px; background: #ECEEF1; color: #1E293B; display: flex; align-items: center; justify-content: center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"></path></svg></span>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px; font-weight: 600">{{f.name}}</div>
+                    <div style="font-size: 14px; color: #4B5563">{{f.meta}}</div>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+            <button style="height: 52px; border-radius: 12px; border: 2px solid #B91C1C; background: #FFFFFF; color: #B91C1C; font: inherit; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>Log out</button>
+            <div style="font-size: 13px; color: #4B5563; text-align: center">Fleet Monitor 1.0.0 (24)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":904}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const phones = [
+      { title: '5.1 Account · Admin', note: 'Opened from the avatar in the app bar.', initials: 'EK', name: 'Elif Kaya', email: 'elif.kaya@fieldops.example', role: 'Admin', roleNote: 'Sees every fleet in the organisation.',
+        fleets: [{ name: 'Tarsus Field Ops', meta: '6 vehicles · AgriRover X', border: '0' }, { name: 'Adana Field Ops', meta: '5 vehicles · AgriRover X', border: '1px solid #E5E7EB' }] },
+      { title: '5.2 Account · Operator', note: 'Only assigned fleets are listed.', initials: 'MD', name: 'Mert Demir', email: 'mert.demir@fieldops.example', role: 'Operator', roleNote: 'Sees fleets assigned by an admin.',
+        fleets: [{ name: 'Tarsus Field Ops', meta: '6 vehicles · AgriRover X', border: '0' }] }
+    ];
+    return { phones };
+  }
+}
+</script>
+</body>
+</html>

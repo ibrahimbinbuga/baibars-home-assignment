@@ -1,0 +1,20 @@
+{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-25T10:00:00Z"},"title":"Fleet Monitor","launch":{"view":"canvas"},"pages":[],
+"boards":{
+"Main.dc.html":{"x":0,"y":1232,"w":390,"h":844,"title":"2.0 Vehicles · List (Admin, connected)","is_interactive":true},
+"ListStates.dc.html":{"x":470,"y":1232,"w":2970,"h":904,"title":"2.1–2.7 Vehicles · List states"},
+"Login.dc.html":{"x":0,"y":0,"w":2110,"h":904,"title":"1.1–1.5 Sign in · all states"},
+"Map.dc.html":{"x":0,"y":2476,"w":820,"h":904,"title":"3.1–3.2 Vehicles · Map"},
+"Account.dc.html":{"x":900,"y":2476,"w":820,"h":904,"title":"5.1–5.2 Account"},
+"Detail.dc.html":{"x":0,"y":3720,"w":2110,"h":1460,"title":"4.1–4.5 Vehicle detail"},
+"Components.dc.html":{"x":0,"y":5520,"w":1720,"h":1780,"title":"Component sheet"},
+"Tokens.dc.html":{"x":1800,"y":5520,"w":1400,"h":1780,"title":"Design tokens · Flutter ThemeData"}
+},
+"order":["Main.dc.html","ListStates.dc.html","Login.dc.html","Map.dc.html","Account.dc.html","Detail.dc.html","Components.dc.html","Tokens.dc.html"],
+"notes":{
+"t1":{"x":0,"y":-260,"text":"1 · Sign in","kind":"title1","maxW":2110},
+"t2":{"x":0,"y":972,"text":"2 · Vehicles — List tab","kind":"title1","maxW":3440},
+"t3":{"x":0,"y":2216,"text":"3 · Map tab  ·  5 · Account","kind":"title1","maxW":1720},
+"t4":{"x":0,"y":3460,"text":"4 · Vehicle detail","kind":"title1","maxW":2110},
+"t5":{"x":0,"y":5260,"text":"Components & design tokens","kind":"title1","maxW":3200}
+},
+"designSystems":[]}

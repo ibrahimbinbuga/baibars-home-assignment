@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor · List states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1E293B}a:hover{color:#0F172A}
+.tn{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn{width:48px;height:48px;border:0;background:transparent;border-radius:24px;display:flex;align-items:center;justify-content:center;color:#111827;padding:0;cursor:pointer;font:inherit;text-decoration:none}
+.badge{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 8px;border-radius:6px;font-size:14px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.card{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:#FFFFFF;border:1px solid #D5D9DE;border-radius:12px;text-decoration:none;color:#111827}
+.card.fault{border-color:#E9A8A8}
+.card.muted{background:#EEF0F2;border-color:#C9CED4}
+.card.muted .vname{color:#374151}
+.card.stale{border-style:dashed;border-color:#9F8BD6}
+.vname{font-size:18px;font-weight:700;line-height:24px}
+.vsub{font-size:14px;color:#4B5563;line-height:20px}
+.mrow{display:flex;align-items:center;gap:16px;font-size:15px}
+.m{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.upd{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#4B5563}
+.sum{height:52px;border-radius:10px;border:1px solid #D5D9DE;background:#FFFFFF;display:flex;align-items:center;gap:8px;padding:0 10px;font:inherit;color:#111827;text-align:left}
+.sum.on{border:2px solid #1E293B;padding:0 9px}
+.chip{height:48px;border-radius:8px;border:1px solid #8A929C;background:#FFFFFF;display:inline-flex;align-items:center;gap:6px;padding:0 14px;font:inherit;font-size:14px;font-weight:600;color:#1F2937;white-space:nowrap;flex:none}
+.chip.on{background:#1E293B;border-color:#1E293B;color:#FFFFFF}
+.nav{height:80px;flex:none;background:#FFFFFF;border-top:1px solid #D5D9DE;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.navi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-decoration:none;color:#4B5563;font-size:13px;font-weight:600}
+.navi .pill{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.navi.on{color:#111827}
+.navi.on .pill{background:#DDE3EA}
+.sk{background:#E1E4E8;border-radius:6px}
+.btn{height:48px;border-radius:10px;border:0;background:#1E293B;color:#FFFFFF;font:inherit;font-size:15px;font-weight:600;padding:0 20px;display:inline-flex;align-items:center;gap:8px}
+.btn.out{background:#FFFFFF;color:#1E293B;border:1px solid #8A929C}
+.phonelabel{height:48px;display:flex;flex-direction:column;justify-content:flex-start}
+</style>
+</helmet>
+<div style="width: 2970px; height: 904px; display: flex; gap: 40px; align-items: flex-start">
+  <sc-for list="{{phones}}" as="p" hint-placeholder-count="7">
+    <div style="width: 390px; flex: none; display: flex; flex-direction: column">
+      <div class="phonelabel">
+        <div style="font-size: 16px; font-weight: 700">{{p.title}}</div>
+        <div style="font-size: 13px; color: #4B5563">{{p.note}}</div>
+      </div>
+      <div style="width: 390px; height: 844px; background: #F4F5F2; display: flex; flex-direction: column; overflow: hidden; position: relative; border-radius: 4px; outline: 1px solid #C9CED4">
+        <header style="height: 64px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px; background: #FFFFFF; border-bottom: 1px solid #D5D9DE">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700; flex: 1">Vehicles</h2>
+          <a href="Account.dc.html" class="iconbtn" aria-label="Account">
+            <span style="width: 36px; height: 36px; border-radius: 18px; background: #1E293B; color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{p.initials}}</span>
+          </a>
+        </header>
+
+        <sc-if value="{{p.reconnecting}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="height: 40px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: #FDF3DC; border-bottom: 1px solid #E8C77A; color: #5C3600; font-size: 14px; font-weight: 600">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"></path></svg>
+            <span>Reconnecting…</span>
+            <span style="margin-left: auto; font-weight: 500; font-size: 13px">Data may be outdated</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{p.disconnected}}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 4px 0 16px; background: #1F2937; color: #FFFFFF; font-size: 14px">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"></path></svg>
+            <span style="flex: 1; line-height: 18px"><b style="font-weight: 700">Disconnected</b><br><span style="font-size: 13px; color: #D1D5DB">Live updates paused since 14:31</span></span>
+            <button style="height: 48px; padding: 0 16px; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; text-decoration: underline">Retry</button>
+          </div>
+        </sc-if>
+
+        <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column">
+          <sc-if value="{{p.showSummary}}" hint-placeholder-val="{{ true }}">
+            <div style="padding: 12px 16px 4px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; opacity: {{p.dataOpacity}}">
+              <sc-for list="{{p.summary}}" as="s" hint-placeholder-count="6">
+                <button class="sum {{s.on}}" aria-label="{{s.aria}}">
+                  <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: {{s.color}}; width: 20px; height: 20px"><path d="{{s.icon}}"></path></svg>
+                  <span class="tn" style="font-size: 20px; font-weight: 700">{{s.count}}</span>
+                  <span style="font-size: 13px; font-weight: 600; color: #374151">{{s.label}}</span>
+                </button>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 8px; padding: 8px 16px; overflow: hidden">
+              <sc-if value="{{p.admin}}" hint-placeholder-val="{{ true }}">
+                <button class="chip {{p.fleetOn}}">{{p.fleetLabel}}<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+                <span style="width: 1px; background: #C9CED4; margin: 8px 0; flex: none"></span>
+              </sc-if>
+              <sc-for list="{{p.chips}}" as="c" hint-placeholder-count="5">
+                <button class="chip {{c.on}}"><sc-if value="{{c.sel}}" hint-placeholder-val="{{ false }}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></sc-if>{{c.label}}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{p.refreshing}}" hint-placeholder-val="{{ false }}">
+            <div style="display: flex; justify-content: center; padding: 4px 0 8px">
+              <span style="width: 44px; height: 44px; border-radius: 22px; background: #FFFFFF; box-shadow: 0 2px 6px rgba(17,24,39,.18); display: flex; align-items: center; justify-content: center; color: #1E293B">
+                <svg viewBox="0 0 24 24" aria-label="Refreshing" role="img" style="width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round"><path d="M12 3a9 9 0 1 1-8.5 6"></path></svg>
+              </span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{p.isList}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 16px 8px; font-size: 13px; color: {{p.countColor}}">
+              <span class="tn" style="font-weight: {{p.countWeight}}">{{p.countLine}}</span>
+              <span>Sorted by status</span>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 0 16px 16px; display: flex; flex-direction: column; gap: 8px">
+              <sc-for list="{{p.vehicles}}" as="v" hint-placeholder-count="5">
+                <a href="Detail.dc.html" class="card {{v.cls}}" aria-label="{{v.name}}">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+                    <div style="min-width: 0">
+                      <div class="vname">{{v.name}}</div>
+                      <div class="vsub">{{v.fleet}}</div>
+                    </div>
+                    <span class="badge" style="background: {{v.tint}}; color: {{v.color}}; border-color: {{v.border}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="{{v.icon}}"></path></svg>{{v.label}}</span>
+                  </div>
+                  <sc-if value="{{v.hasData}}" hint-placeholder-val="{{ true }}">
+                    <div class="mrow">
+                      <span class="m" style="color: {{v.batColor}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="{{v.batIcon}}"></path></svg><span class="tn">{{v.bat}}</span></span>
+                      <span class="m" style="color: {{v.spdColor}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"></path></svg><span class="tn">{{v.spd}}</span></span>
+                      <span class="upd tn" style="color: {{v.updColor}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2"></path></svg>{{v.upd}}</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{v.noData}}" hint-placeholder-val="{{ false }}">
+                    <div class="mrow">
+                      <span class="m" style="color: #4B5563"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M8 12h8"></path></svg>No data yet</span>
+                      <span class="upd">Never reported</span>
+                    </div>
+                  </sc-if>
+                </a>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{p.isLoading}}" hint-placeholder-val="{{ false }}">
+            <div aria-busy="true" aria-label="Loading vehicles" style="padding: 12px 16px; display: flex; flex-direction: column; gap: 8px">
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+                <sc-for list="{{six}}" as="k" hint-placeholder-count="6"><div class="sk" style="height: 52px; border-radius: 10px"></div></sc-for>
+              </div>
+              <div style="display: flex; gap: 8px; padding: 8px 0">
+                <div class="sk" style="width: 120px; height: 48px; border-radius: 8px"></div>
+                <div class="sk" style="width: 64px; height: 48px; border-radius: 8px"></div>
+                <div class="sk" style="width: 96px; height: 48px; border-radius: 8px"></div>
+                <div class="sk" style="width: 72px; height: 48px; border-radius: 8px"></div>
+              </div>
+              <sc-for list="{{five}}" as="k" hint-placeholder-count="5">
+                <div style="background: #FFFFFF; border: 1px solid #E1E4E8; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px">
+                  <div style="display: flex; justify-content: space-between">
+                    <div style="display: flex; flex-direction: column; gap: 6px"><div class="sk" style="width: 72px; height: 18px"></div><div class="sk" style="width: 128px; height: 14px"></div></div>
+                    <div class="sk" style="width: 88px; height: 30px"></div>
+                  </div>
+                  <div style="display: flex; gap: 16px"><div class="sk" style="width: 56px; height: 16px"></div><div class="sk" style="width: 80px; height: 16px"></div><div class="sk" style="width: 96px; height: 16px; margin-left: auto"></div></div>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{p.isEmpty}}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 40px 80px; text-align: center">
+              <span style="width: 64px; height: 64px; border-radius: 32px; background: #E5E8EC; display: flex; align-items: center; justify-content: center; color: #4B5563"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><path d="M3 5h18l-7 8v6l-4-2v-4L3 5Z"></path></svg></span>
+              <div style="font-size: 18px; font-weight: 700">No vehicles match this filter</div>
+              <div style="font-size: 15px; color: #4B5563; line-height: 22px">No Charging vehicles in Adana Field Ops right now.</div>
+              <button class="btn out" style="margin-top: 4px">Clear filters</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{p.isError}}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 0 40px 80px; text-align: center">
+              <span style="width: 64px; height: 64px; border-radius: 32px; background: #FDE7E7; display: flex; align-items: center; justify-content: center; color: #B91C1C"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01"></path></svg></span>
+              <div style="font-size: 18px; font-weight: 700">Couldn’t load vehicles</div>
+              <div style="font-size: 15px; color: #4B5563; line-height: 22px">The server didn’t respond. Check your connection and try again.</div>
+              <button class="btn" style="margin-top: 4px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"></path></svg>Retry</button>
+            </div>
+          </sc-if>
+        </div>
+
+        <nav class="nav" aria-label="Views">
+          <a href="Main.dc.html" class="navi on" aria-current="page"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg></span>List</a>
+          <a href="Map.dc.html" class="navi"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2ZM9 4v14M15 6v14"></path></svg></span>Map</a>
+        </nav>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2970,"height":904}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      moving: 'M12 3 19 20 12 16.5 5 20Z',
+      idle: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M10 9v6M14 9v6',
+      charging: 'M13 2 4 14h7l-1 8 9-12h-7Z',
+      fault: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01',
+      offline: 'M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01',
+      stale: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2'
+    };
+    const S = {
+      moving: { label: 'Moving', c: '#137333', t: '#E7F6EC' },
+      idle: { label: 'Idle', c: '#975400', t: '#FDF3DC' },
+      charging: { label: 'Charging', c: '#1D4ED8', t: '#E3ECFD' },
+      fault: { label: 'Fault', c: '#B91C1C', t: '#FDE7E7' },
+      offline: { label: 'Offline', c: '#4B5563', t: '#ECEEF1' },
+      stale: { label: 'Stale', c: '#6D28D9', t: '#EFEAFC' }
+    };
+    const keys = ['moving', 'idle', 'charging', 'fault', 'offline', 'stale'];
+    const BAT = 'M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2';
+    const T = 'Tarsus Field Ops', A = 'Adana Field Ops';
+    const card = ([name, fleet, st, bat, spd, upd], outdated) => {
+      const s = S[st]; const noData = bat === null; const muted = st === 'offline' || st === 'stale';
+      const low = bat !== null && bat < 20 && !muted;
+      return {
+        name, fleet, label: s.label, color: s.c, tint: s.t, icon: I[st],
+        border: st === 'stale' ? '#B9A6EA' : 'transparent',
+        cls: [st === 'fault' ? 'fault' : '', muted ? 'muted' : '', st === 'stale' ? 'stale' : ''].join(' '),
+        hasData: !noData, noData, bat: noData ? '' : bat + '%', batIcon: low ? BAT + 'M6 10v4' : BAT,
+        batColor: low ? '#B91C1C' : (muted ? '#4B5563' : '#111827'),
+        spd: spd === null ? '— km/h' : spd.toFixed(1) + ' km/h', spdColor: muted ? '#4B5563' : '#111827',
+        upd, updColor: st === 'stale' ? '#6D28D9' : (outdated ? '#975400' : '#4B5563')
+      };
+    };
+    const summary = (counts, on) => keys.map((k, i) => ({ count: counts[i], label: S[k].label, color: S[k].c, icon: I[k], on: on === k ? 'on' : '', aria: counts[i] + ' ' + S[k].label }));
+    const chips = (on) => [{ k: 'all', label: 'All' }].concat(keys.map((k) => ({ k, label: S[k].label }))).map((c) => ({ label: c.label, sel: on === c.k, on: on === c.k ? 'on' : '' }));
+    const adminRows = [
+      ['TR-04', T, 'fault', 52, 0, 'updated 8s ago'], ['TR-01', T, 'moving', 78, 12.4, 'updated 4s ago'],
+      ['TR-05', T, 'moving', 18, 9.8, 'updated 2s ago'], ['AD-01', A, 'moving', 91, 14.1, 'updated 5s ago'],
+      ['TR-02', T, 'idle', 64, 0, 'updated 6s ago']
+    ];
+    const outdatedRows = [
+      ['TR-04', T, 'fault', 52, 0, 'updated 24s ago'], ['TR-01', T, 'moving', 78, 12.4, 'updated 21s ago'],
+      ['TR-05', T, 'moving', 18, 9.8, 'updated 19s ago'], ['AD-01', A, 'moving', 91, 14.1, 'updated 22s ago'],
+      ['TR-02', T, 'idle', 64, 0, 'updated 23s ago']
+    ];
+    const discRows = [
+      ['TR-04', T, 'fault', 52, 0, 'updated 1m ago'], ['TR-01', T, 'moving', 78, 12.4, 'updated 1m ago'],
+      ['TR-05', T, 'moving', 18, 9.8, 'updated 1m ago'], ['AD-01', A, 'moving', 91, 14.1, 'updated 1m ago'],
+      ['TR-02', T, 'idle', 64, 0, 'updated 1m ago']
+    ];
+    const opRows = [
+      ['TR-04', T, 'fault', 52, 0, 'updated 8s ago'], ['TR-01', T, 'moving', 78, 12.4, 'updated 4s ago'],
+      ['TR-05', T, 'moving', 18, 9.8, 'updated 2s ago'], ['TR-02', T, 'idle', 64, 0, 'updated 6s ago'],
+      ['TR-03', T, 'charging', 31, 0, 'updated 3s ago'], ['TR-06', T, 'stale', 44, 7.2, 'last seen 2m ago']
+    ];
+    const adminCounts = [3, 2, 1, 1, 3, 1];
+    const base = { initials: 'EK', admin: true, fleetLabel: 'All fleets', fleetOn: '', showSummary: true, isList: true, isLoading: false, isEmpty: false, isError: false, reconnecting: false, disconnected: false, refreshing: false, dataOpacity: 1, countColor: '#4B5563', countWeight: 400 };
+    const phones = [
+      Object.assign({}, base, { title: '2.1 Reconnecting…', note: 'Slim, non-blocking banner. Last data stays; times shown in amber.', reconnecting: true, summary: summary(adminCounts, ''), chips: chips('all'), vehicles: outdatedRows.map((r) => card(r, true)), countLine: 'Last received 14:32:10 · may be outdated', countColor: '#5C3600', countWeight: 600 }),
+      Object.assign({}, base, { title: '2.2 Disconnected', note: 'Persistent banner with Retry. Data kept, clearly stale.', disconnected: true, summary: summary(adminCounts, ''), chips: chips('all'), vehicles: discRows.map((r) => card(r, true)), countLine: 'Last received 14:31:02 · not live', countColor: '#5C3600', countWeight: 600 }),
+      Object.assign({}, base, { title: '2.3 Pull to refresh', note: 'Standard RefreshIndicator over the list.', refreshing: true, summary: summary(adminCounts, ''), chips: chips('all'), vehicles: adminRows.slice(0, 4).map((r) => card(r, false)), countLine: '11 of 11 vehicles · 2 fleets' }),
+      Object.assign({}, base, { title: '2.4 Loading', note: 'First load: skeleton mirrors the final layout.', showSummary: false, isList: false, isLoading: true }),
+      Object.assign({}, base, { title: '2.5 Empty (filtered)', note: 'Fleet = Adana, status = Charging → nothing matches.', fleetLabel: 'Adana Field Ops', fleetOn: 'on', summary: summary([1, 1, 0, 0, 3, 0], 'charging'), chips: chips('charging'), isList: false, isEmpty: true }),
+      Object.assign({}, base, { title: '2.6 Error', note: 'Initial load failed. Retry re-requests the list.', showSummary: false, isList: false, isError: true }),
+      Object.assign({}, base, { title: '2.7 Operator (one fleet)', note: 'Only Tarsus Field Ops assigned → no fleet filter.', initials: 'MD', admin: false, summary: summary([2, 1, 1, 1, 0, 1], ''), chips: chips('all'), vehicles: opRows.map((r) => card(r, false)), countLine: '6 of 6 vehicles · Tarsus Field Ops' })
+    ];
+    return { phones, six: [1, 2, 3, 4, 5, 6], five: [1, 2, 3, 4, 5] };
+  }
+}
+</script>
+</body>
+</html>

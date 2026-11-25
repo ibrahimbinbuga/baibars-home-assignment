@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor · Vehicle detail</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1E293B}a:hover{color:#0F172A}
+.tn{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tile{background:#FFFFFF;border:1px solid #D5D9DE;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-height:96px}
+.tl{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#4B5563}
+.tv{font-size:26px;font-weight:700;line-height:32px}
+.tv small{font-size:15px;font-weight:600;color:#4B5563;margin-left:3px}
+.tab{flex:1;height:48px;border:0;background:transparent;font:inherit;font-size:15px;font-weight:600;color:#4B5563;border-bottom:3px solid transparent}
+.tab.on{color:#111827;border-bottom-color:#1E293B}
+.row{min-height:64px;display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid #E5E7EB;background:#FFFFFF}
+.hr{display:grid;grid-template-columns:78px 1fr 72px 52px;align-items:center;gap:8px;padding:0 16px;min-height:48px;border-top:1px solid #E5E7EB;background:#FFFFFF;font-size:14px}
+</style>
+</helmet>
+<div style="width: 2110px; height: 1460px; display: flex; gap: 40px; align-items: flex-start">
+  <sc-for list="{{phones}}" as="p" hint-placeholder-count="5">
+    <div style="width: 390px; flex: none; display: flex; flex-direction: column">
+      <div style="height: 48px">
+        <div style="font-size: 16px; font-weight: 700">{{p.title}}</div>
+        <div style="font-size: 13px; color: #4B5563">{{p.note}}</div>
+      </div>
+      <div style="width: 390px; height: 1400px; background: #F4F5F2; display: flex; flex-direction: column; overflow: hidden; border-radius: 4px; outline: 1px solid #C9CED4">
+        <header style="height: 64px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 16px 0 4px; background: #FFFFFF; border-bottom: 1px solid #D5D9DE">
+          <a href="Main.dc.html" aria-label="Back to vehicles" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #111827"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 24px; height: 24px"><path d="M15 18l-6-6 6-6"></path></svg></a>
+          <h2 style="margin: 0; font-size: 20px; font-weight: 700">Vehicle</h2>
+        </header>
+
+        <sc-if value="{{p.reconnecting}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="height: 40px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: #FDF3DC; border-bottom: 1px solid #E8C77A; color: #5C3600; font-size: 14px; font-weight: 600">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"></path></svg>
+            <span>Reconnecting…</span>
+            <span style="margin-left: auto; font-weight: 500; font-size: 13px">Data may be outdated</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{p.disconnected}}" hint-placeholder-val="{{ false }}">
+          <div role="alert" style="height: 56px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 4px 0 16px; background: #1F2937; color: #FFFFFF; font-size: 14px">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"></path></svg>
+            <span style="flex: 1; line-height: 18px"><b style="font-weight: 700">Disconnected</b><br><span style="font-size: 13px; color: #D1D5DB">Live updates paused since 14:31</span></span>
+            <button style="height: 48px; padding: 0 16px; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; text-decoration: underline">Retry</button>
+          </div>
+        </sc-if>
+
+        <section style="background: #FFFFFF; padding: 16px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid #D5D9DE">
+          <div>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; line-height: 34px">{{p.v.name}}</h1>
+              <span class="tn" style="font-size: 13px; color: #4B5563">SN {{p.v.serial}}</span>
+            </div>
+            <div style="font-size: 15px; color: #374151; margin-top: 2px">{{p.v.fleet}} · AgriRover X</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+            <span style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 12px; border-radius: 8px; background: {{p.v.tint}}; color: {{p.v.color}}; font-size: 17px; font-weight: 700"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="{{p.v.icon}}"></path></svg>{{p.v.label}}</span>
+            <span class="tn" style="display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: {{p.v.updWeight}}; color: {{p.v.updColor}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2"></path></svg>{{p.v.upd}}</span>
+          </div>
+        </section>
+
+        <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 700">Live metrics</h3>
+            <span style="font-size: 13px; font-weight: 600; color: #5C3600">{{p.metricsNote}}</span>
+          </div>
+
+          <sc-if value="{{p.hasData}}" hint-placeholder-val="{{ true }}">
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; opacity: {{p.dataOpacity}}">
+              <div class="tile">
+                <span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"></path></svg>Speed</span>
+                <span class="tv tn">{{p.v.speed}}<small>km/h</small></span>
+              </div>
+              <div class="tile">
+                <span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M16 8l-2 6-6 2 2-6 6-2Z"></path></svg>Heading</span>
+                <span style="display: flex; align-items: center; gap: 10px">
+                  <span style="width: 32px; height: 32px; border-radius: 16px; border: 1.5px solid #9CA3AF; display: flex; align-items: center; justify-content: center">
+                    <svg viewBox="0 0 24 24" width="20" height="20" role="img" aria-label="{{p.v.headingAria}}" style="transform: rotate({{p.v.heading}}deg)"><path d="M12 2 18 20 12 16 6 20Z" fill="#1E293B"></path></svg>
+                  </span>
+                  <span class="tv tn">{{p.v.heading}}°<small>{{p.v.cardinal}}</small></span>
+                </span>
+              </div>
+              <div class="tile" style="background: {{p.v.batBg}}; border-color: {{p.v.batBorder}}">
+                <span class="tl" style="color: {{p.v.batLabelColor}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="{{p.v.batIcon}}"></path></svg>{{p.v.batLabel}}</span>
+                <span class="tv tn" style="color: {{p.v.batColor}}">{{p.v.bat}}<small style="color: {{p.v.batColor}}">%</small></span>
+                <span style="height: 8px; border-radius: 4px; background: #E5E7EB; overflow: hidden"><span style="display: block; height: 8px; width: {{p.v.bat}}%; background: {{p.v.batColor}}"></span></span>
+              </div>
+              <div class="tile">
+                <span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21ZM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"></path></svg>Coordinates</span>
+                <span class="tn" style="font-size: 17px; font-weight: 700; line-height: 24px">{{p.v.lat}}<br>{{p.v.lon}}</span>
+              </div>
+            </div>
+
+            <div style="height: 160px; border-radius: 12px; overflow: hidden; border: 1px solid #C9CED4; position: relative; background: #F2EFE9">
+              <svg viewBox="0 0 358 160" width="358" height="160" aria-hidden="true" style="position: absolute; inset: 0">
+                <path d="M0 0h120l10 70L0 90Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+                <path d="M150 0h120l-10 60-110 10Z" fill="#CDEBB0" stroke="#B6D69A"></path>
+                <path d="M280 0h78v90l-80-10Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+                <path d="M10 110l120-10 10 60H10Z" fill="#AEDFA3" stroke="#97C98C"></path>
+                <path d="M200 100l130-10 10 70H200Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+                <path d="M0 88C100 92 240 78 358 96" fill="none" stroke="#C9C2B6" stroke-width="9"></path>
+                <path d="M0 88C100 92 240 78 358 96" fill="none" stroke="#FCD6A4" stroke-width="6"></path>
+                <path d="M140 0C140 60 150 110 160 160" fill="none" stroke="#C9C2B6" stroke-width="7"></path>
+                <path d="M140 0C140 60 150 110 160 160" fill="none" stroke="#FFFFFF" stroke-width="4"></path>
+              </svg>
+              <svg viewBox="0 0 40 40" width="40" height="40" role="img" aria-label="{{p.v.name}} position" style="position: absolute; left: 159px; top: 50px; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35)); overflow: visible">
+                <path d="{{p.v.mShape}}" fill="{{p.v.mFill}}" stroke="#FFFFFF" stroke-width="2.5"></path>
+                <g transform="{{p.v.mIconT}}"><path d="{{p.v.mIcon}}" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></g>
+              </svg>
+              <a href="Map.dc.html" style="position: absolute; right: 8px; bottom: 8px; height: 40px; padding: 0 12px; border-radius: 8px; background: #FFFFFF; border: 1px solid #C9CED4; font-size: 14px; font-weight: 600; color: #1E293B; text-decoration: none; display: flex; align-items: center; gap: 6px">Open in map<svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px"><path d="M9 6l6 6-6 6"></path></svg></a>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{p.noData}}" hint-placeholder-val="{{ false }}">
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+              <sc-for list="{{emptyTiles}}" as="t" hint-placeholder-count="4">
+                <div class="tile" style="background: #EEF0F2"><span class="tl">{{t}}</span><span class="tv" style="color: #6B7280">—</span></div>
+              </sc-for>
+            </div>
+            <div style="height: 160px; border-radius: 12px; border: 1px dashed #9CA3AF; background: #EEF0F2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 0 24px">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 28px; height: 28px; color: #4B5563"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21ZM9 9.5h6"></path></svg>
+              <div style="font-size: 16px; font-weight: 700">No data yet</div>
+              <div style="font-size: 14px; color: #4B5563; line-height: 20px">This vehicle has not reported since it was added. Metrics and position appear after its first update.</div>
+            </div>
+          </sc-if>
+        </div>
+
+        <div role="tablist" style="display: flex; background: #FFFFFF; border-top: 1px solid #D5D9DE; border-bottom: 1px solid #D5D9DE">
+          <button role="tab" class="tab {{p.actOn}}" aria-selected="{{p.isActivity}}">Activity</button>
+          <button role="tab" class="tab {{p.histOn}}" aria-selected="{{p.isHistory}}">History · last 1 h</button>
+        </div>
+
+        <sc-if value="{{p.isActivity}}" hint-placeholder-val="{{ true }}">
+          <sc-if value="{{p.hasEvents}}" hint-placeholder-val="{{ true }}">
+            <div style="display: flex; flex-direction: column">
+              <sc-for list="{{p.events}}" as="e" hint-placeholder-count="6">
+                <div class="row">
+                  <span style="width: 40px; height: 40px; border-radius: 20px; background: {{e.tint}}; color: {{e.color}}; display: flex; align-items: center; justify-content: center; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="{{e.icon}}"></path></svg></span>
+                  <div style="flex: 1; min-width: 0">
+                    <div style="font-size: 15px; font-weight: 600">{{e.title}}</div>
+                    <div style="font-size: 14px; color: #4B5563">{{e.detail}}</div>
+                  </div>
+                  <div class="tn" style="text-align: right">
+                    <div style="font-size: 14px; font-weight: 600">{{e.time}}</div>
+                    <div style="font-size: 13px; color: #4B5563">{{e.ago}}</div>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="padding: 16px; border-top: 1px solid #E5E7EB; background: #FFFFFF">
+                <button style="width: 100%; height: 48px; border-radius: 10px; border: 1px solid #8A929C; background: #FFFFFF; font: inherit; font-size: 15px; font-weight: 600; color: #1E293B">Load more</button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{p.noEvents}}" hint-placeholder-val="{{ false }}">
+            <div style="background: #FFFFFF; padding: 40px 32px; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center">
+              <span style="width: 56px; height: 56px; border-radius: 28px; background: #ECEEF1; color: #4B5563; display: flex; align-items: center; justify-content: center"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 26px; height: 26px"><path d="M4 6h16M4 12h10M4 18h6"></path></svg></span>
+              <div style="font-size: 16px; font-weight: 700">No activity yet</div>
+              <div style="font-size: 14px; color: #4B5563; line-height: 20px">Events like state changes and faults will appear here, newest first.</div>
+            </div>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{p.isHistory}}" hint-placeholder-val="{{ false }}">
+          <div style="background: #FFFFFF; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+            <div style="display: flex; gap: 16px; font-size: 13px; font-weight: 600; color: #374151">
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 18px; height: 3px; background: #1E293B"></span>Battery %</span>
+              <span style="display: inline-flex; align-items: center; gap: 6px"><span style="width: 18px; height: 0; border-top: 3px dashed #0E7490"></span>Speed km/h</span>
+            </div>
+            <svg viewBox="0 0 358 150" width="358" height="150" role="img" aria-label="Battery fell from 85% to 78% and speed peaked at 12.4 km/h over the last hour; no samples between 14:12 and 14:29 while offline">
+              <line x1="34" y1="10" x2="324" y2="10" stroke="#E5E7EB"></line>
+              <line x1="34" y1="60" x2="324" y2="60" stroke="#E5E7EB"></line>
+              <line x1="34" y1="110" x2="324" y2="110" stroke="#9CA3AF"></line>
+              <rect x="{{chart.gapX}}" y="10" width="{{chart.gapW}}" height="100" fill="#ECEEF1"></rect>
+              <text x="{{chart.gapMid}}" y="64" text-anchor="middle" font-size="11" fill="#374151" font-family="Inter, sans-serif">offline</text>
+              <polyline points="{{chart.bat1}}" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linejoin="round"></polyline>
+              <polyline points="{{chart.bat2}}" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linejoin="round"></polyline>
+              <polyline points="{{chart.spd1}}" fill="none" stroke="#0E7490" stroke-width="2.5" stroke-dasharray="5 3" stroke-linejoin="round"></polyline>
+              <polyline points="{{chart.spd2}}" fill="none" stroke="#0E7490" stroke-width="2.5" stroke-dasharray="5 3" stroke-linejoin="round"></polyline>
+              <text x="28" y="14" text-anchor="end" font-size="11" fill="#374151" font-family="Inter, sans-serif">100</text>
+              <text x="28" y="64" text-anchor="end" font-size="11" fill="#374151" font-family="Inter, sans-serif">50</text>
+              <text x="28" y="114" text-anchor="end" font-size="11" fill="#374151" font-family="Inter, sans-serif">0</text>
+              <text x="330" y="14" font-size="11" fill="#0E6276" font-family="Inter, sans-serif">20</text>
+              <text x="330" y="64" font-size="11" fill="#0E6276" font-family="Inter, sans-serif">10</text>
+              <text x="34" y="130" font-size="11" fill="#374151" font-family="Inter, sans-serif">13:35</text>
+              <text x="179" y="130" text-anchor="middle" font-size="11" fill="#374151" font-family="Inter, sans-serif">14:05</text>
+              <text x="324" y="130" text-anchor="end" font-size="11" fill="#374151" font-family="Inter, sans-serif">14:35</text>
+            </svg>
+          </div>
+          <div class="hr" style="min-height: 36px; background: #F4F5F2; font-size: 12px; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: .04em">
+            <span>Time</span><span>State</span><span style="text-align: right">km/h</span><span style="text-align: right">Batt.</span>
+          </div>
+          <sc-for list="{{samples}}" as="s" hint-placeholder-count="12">
+            <sc-if value="{{s.isGap}}" hint-placeholder-val="{{ false }}">
+              <div style="min-height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #ECEEF1; border-top: 1px solid #E5E7EB; font-size: 13px; font-weight: 600; color: #374151">
+                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M12 20h.01"></path></svg>No samples 14:12–14:29 · offline
+              </div>
+            </sc-if>
+            <sc-if value="{{s.isRow}}" hint-placeholder-val="{{ true }}">
+              <div class="hr tn">
+                <span><span style="font-weight: 600">{{s.time}}</span><br><span style="font-size: 11px; color: #4B5563">{{s.pos}}</span></span>
+                <span style="display: inline-flex; align-items: center; gap: 6px; color: {{s.color}}; font-weight: 600"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px"><path d="{{s.icon}}"></path></svg>{{s.label}}</span>
+                <span style="text-align: right">{{s.spd}}</span>
+                <span style="text-align: right">{{s.bat}}</span>
+              </div>
+            </sc-if>
+          </sc-for>
+        </sc-if>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2110,"height":1460}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      moving: 'M12 3 19 20 12 16.5 5 20Z',
+      idle: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M10 9v6M14 9v6',
+      charging: 'M13 2 4 14h7l-1 8 9-12h-7Z',
+      fault: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01',
+      offline: 'M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01',
+      online: 'M5 12.9a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 20 0M12 20h.01',
+      state: 'M7 7h13l-4-4M17 17H4l4 4',
+      lowbat: 'M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2M6 10v4'
+    };
+    const S = {
+      moving: { label: 'Moving', c: '#137333', t: '#E7F6EC' },
+      idle: { label: 'Idle', c: '#975400', t: '#FDF3DC' },
+      charging: { label: 'Charging', c: '#1D4ED8', t: '#E3ECFD' },
+      fault: { label: 'Fault', c: '#B91C1C', t: '#FDE7E7' },
+      offline: { label: 'Offline', c: '#4B5563', t: '#ECEEF1' }
+    };
+    const BAT = 'M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2';
+    const MSH = { circle: 'M20 2a18 18 0 1 0 0.01 0Z', triangle: 'M17.4 3.5a3 3 0 0 1 5.2 0l16.4 29A3 3 0 0 1 36.4 37H3.6A3 3 0 0 1 1 32.5Z' };
+    const card = (o) => {
+      const s = S[o.st]; const low = o.bat < 20;
+      const cardinal = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(o.heading / 45) % 8];
+      return Object.assign({
+        label: s.label, color: s.c, tint: s.t, icon: I[o.st], cardinal,
+        headingAria: 'Heading ' + o.heading + ' degrees ' + cardinal,
+        bat: o.bat, batBg: low ? '#FDE7E7' : '#FFFFFF', batBorder: low ? '#E9A8A8' : '#D5D9DE',
+        batColor: low ? '#B91C1C' : '#111827', batLabelColor: low ? '#8F1414' : '#4B5563',
+        batLabel: low ? 'Low battery' : 'Battery', batIcon: low ? I.lowbat : BAT,
+        updColor: '#4B5563', updWeight: 400,
+        mShape: o.st === 'fault' ? MSH.triangle : MSH.circle, mFill: s.c,
+        mIcon: o.st === 'fault' ? 'M12 7v6M12 17h.01' : I.moving,
+        mIconT: o.st === 'fault' ? 'translate(8 11)' : 'rotate(' + o.heading + ' 20 20) translate(8 8)'
+      }, o);
+    };
+    const T = 'Tarsus Field Ops';
+    const ev = (type, detail, time, ago) => {
+      const m = {
+        online: { title: 'Came online', icon: I.online, tint: '#E7F6EC', color: '#137333' },
+        offline: { title: 'Went offline', icon: I.offline, tint: '#ECEEF1', color: '#4B5563' },
+        state: { title: 'State changed', icon: I.state, tint: '#E2E8F0', color: '#1E293B' },
+        lowbat: { title: 'Low battery', icon: I.lowbat, tint: '#FDF3DC', color: '#975400' },
+        fault: { title: 'Fault raised', icon: I.fault, tint: '#FDE7E7', color: '#B91C1C' }
+      }[type];
+      return Object.assign({ detail, time, ago }, m);
+    };
+    const tr01Events = [
+      ev('state', 'Idle → Moving', '14:32:08', '2m ago'), ev('online', 'Link restored', '14:29:51', '5m ago'),
+      ev('offline', 'No signal for 30 s', '14:12:40', '22m ago'), ev('state', 'Idle → Moving', '13:58:03', '36m ago'),
+      ev('state', 'Charging → Idle', '13:47:15', '47m ago'), ev('online', 'Link restored', '13:05:22', '1h ago')
+    ];
+    const base = { reconnecting: false, disconnected: false, hasData: true, noData: false, dataOpacity: 1, metricsNote: '', isActivity: true, isHistory: false, actOn: 'on', histOn: '', hasEvents: true, noEvents: false };
+    const tr01 = card({ name: 'TR-01', fleet: T, serial: 'ARX-24-00317', st: 'moving', speed: '12.4', heading: 312, bat: 78, lat: '36.9182° N', lon: '34.8927° E', upd: 'last update 3s ago' });
+    const phones = [
+      Object.assign({}, base, { title: '4.1 Detail · Activity', note: 'Connected. Newest event first, Load more at the end.', v: tr01, events: tr01Events }),
+      Object.assign({}, base, { title: '4.2 Detail · History', note: 'Last hour: battery/speed chart, then samples.', v: tr01, isActivity: false, isHistory: true, actOn: '', histOn: 'on' }),
+      Object.assign({}, base, { title: '4.3 Reconnecting · low battery', note: 'Banner + amber timestamps. Battery < 20% uses warning tile.', reconnecting: true, metricsNote: 'As of 14:32:10',
+        v: Object.assign(card({ name: 'TR-05', fleet: T, serial: 'ARX-24-00321', st: 'moving', speed: '9.8', heading: 95, bat: 18, lat: '36.9047° N', lon: '34.9012° E', upd: 'last update 21s ago · may be outdated' }), { updColor: '#5C3600', updWeight: 600 }),
+        events: [ev('lowbat', 'Battery at 18%', '14:30:44', '3m ago'), ev('state', 'Idle → Moving', '14:18:02', '15m ago'), ev('state', 'Charging → Idle', '13:52:37', '41m ago'), ev('online', 'Link restored', '13:20:11', '1h ago')] }),
+      Object.assign({}, base, { title: '4.4 Disconnected · fault', note: 'Retry in banner. Last known values stay visible.', disconnected: true, metricsNote: 'As of 14:31:02',
+        v: Object.assign(card({ name: 'TR-04', fleet: T, serial: 'ARX-24-00320', st: 'fault', speed: '0.0', heading: 204, bat: 52, lat: '36.8961° N', lon: '34.8803° E', upd: 'last update 1m ago · not live' }), { updColor: '#5C3600', updWeight: 600 }),
+        events: [ev('fault', 'Drive motor overcurrent (E-214)', '14:26:19', '6m ago'), ev('state', 'Moving → Fault', '14:26:19', '6m ago'), ev('state', 'Idle → Moving', '14:02:45', '30m ago'), ev('online', 'Link restored', '12:58:30', '1h ago')] }),
+      Object.assign({}, base, { title: '4.5 Never reported', note: 'No location or metrics yet; empty Activity.', hasData: false, noData: true, hasEvents: false, noEvents: true,
+        v: { name: 'AD-05', fleet: 'Adana Field Ops', serial: 'ARX-25-00402', label: 'Offline', color: '#4B5563', tint: '#ECEEF1', icon: I.offline, upd: 'No data yet', updColor: '#4B5563', updWeight: 600 }, events: [] })
+    ];
+    const raw = [
+      ['14:35:00', 'moving', 12.4, 78, 60], ['14:33:00', 'moving', 11.8, 79, 58], ['14:30:00', 'idle', 0, 79, 55], 'gap',
+      ['14:10:00', 'moving', 10.9, 81, 35], ['14:05:00', 'moving', 12.1, 82, 30], ['14:00:00', 'moving', 9.6, 84, 25],
+      ['13:55:00', 'idle', 0, 85, 20], ['13:50:00', 'idle', 0, 85, 15], ['13:45:00', 'charging', 0, 83, 10],
+      ['13:40:00', 'charging', 0, 79, 5], ['13:35:00', 'charging', 0, 75, 0]
+    ];
+    const pos = ['36.9182, 34.8927', '36.9176, 34.8935', '36.9171, 34.8941', '', '36.9150, 34.8962', '36.9133, 34.8970', '36.9120, 34.8968', '36.9118, 34.8955', '36.9118, 34.8955', '36.9116, 34.8952', '36.9116, 34.8952', '36.9116, 34.8952'];
+    const samples = raw.map((r, i) => r === 'gap' ? { isGap: true, isRow: false } : {
+      isGap: false, isRow: true, time: r[0].slice(0, 5), pos: pos[i], label: S[r[1]].label, color: S[r[1]].c, icon: I[r[1]],
+      spd: r[2].toFixed(1), bat: r[3] + '%'
+    });
+    const x = (m) => (34 + m / 60 * 290).toFixed(1);
+    const yb = (b) => (110 - b).toFixed(1);
+    const ys = (s) => (110 - s / 20 * 100).toFixed(1);
+    const pts = raw.filter((r) => r !== 'gap').reverse();
+    const before = pts.filter((r) => r[4] <= 35), after = pts.filter((r) => r[4] >= 55);
+    const line = (arr, f, k) => arr.map((r) => x(r[4]) + ',' + f(r[k])).join(' ');
+    const chart = {
+      bat1: line(before, yb, 3), bat2: line(after, yb, 3), spd1: line(before, ys, 2), spd2: line(after, ys, 2),
+      gapX: x(37), gapW: (x(54) - x(37)).toFixed(1), gapMid: ((+x(37) + +x(54)) / 2).toFixed(1)
+    };
+    return { phones, samples, chart, emptyTiles: ['Speed', 'Heading', 'Battery', 'Coordinates'] };
+  }
+}
+</script>
+</body>
+</html>

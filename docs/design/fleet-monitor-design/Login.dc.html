@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor · Sign in states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1E293B}a:hover{color:#0F172A}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.lbl{font-size:14px;font-weight:600;color:#1F2937}
+.field{height:56px;border-radius:10px;border:1px solid #8A929C;background:#FFFFFF;display:flex;align-items:center;padding:0 4px 0 14px;font-size:16px;color:#111827}
+.field input{border:0;outline:0;flex:1;font:inherit;font-size:16px;background:transparent;color:#111827;min-width:0}
+</style>
+</helmet>
+<div style="width: 2110px; height: 904px; display: flex; gap: 40px; align-items: flex-start">
+  <sc-for list="{{phones}}" as="p" hint-placeholder-count="5">
+    <div style="width: 390px; flex: none; display: flex; flex-direction: column">
+      <div style="height: 48px">
+        <div style="font-size: 16px; font-weight: 700">{{p.title}}</div>
+        <div style="font-size: 13px; color: #4B5563">{{p.note}}</div>
+      </div>
+      <div style="width: 390px; height: 844px; background: #F4F5F2; display: flex; flex-direction: column; overflow: hidden; border-radius: 4px; outline: 1px solid #C9CED4">
+        <sc-if value="{{p.expired}}" hint-placeholder-val="{{ false }}">
+          <div role="status" style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #FDF3DC; border-bottom: 1px solid #E8C77A; color: #5C3600; font-size: 15px; font-weight: 600">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2"></path></svg>
+            Session expired, please sign in again.
+          </div>
+        </sc-if>
+        <div style="flex: 1; display: flex; flex-direction: column; padding: 72px 24px 32px; gap: 32px">
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <span style="width: 56px; height: 56px; border-radius: 14px; background: #1E293B; color: #FFFFFF; display: flex; align-items: center; justify-content: center">
+              <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 30px; height: 30px"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21ZM12 7v5l3 2"></path></svg>
+            </span>
+            <div>
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; line-height: 36px">Fleet Monitor</h1>
+              <p style="margin: 4px 0 0; font-size: 16px; color: #4B5563; line-height: 24px">Sign in with your operations account.</p>
+            </div>
+          </div>
+
+          <form style="display: flex; flex-direction: column; gap: 20px; opacity: {{p.formOpacity}}">
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label class="lbl" for="em">Email</label>
+              <div class="field" style="border-color: {{p.emailBorder}}; border-width: {{p.borderW}}">
+                <input id="em" type="email" value="{{p.email}}" placeholder="name@company.com">
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 6px">
+              <label class="lbl" for="pw">Password</label>
+              <div class="field" style="border-color: {{p.pwBorder}}; border-width: {{p.borderW}}">
+                <input id="pw" type="password" value="{{p.pw}}" placeholder="Password">
+                <button type="button" aria-label="Show password" style="width: 48px; height: 48px; border: 0; background: transparent; color: #4B5563; display: flex; align-items: center; justify-content: center">
+                  <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <sc-if value="{{p.hasError}}" hint-placeholder-val="{{ false }}">
+              <div role="alert" style="display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 10px; background: #FDE7E7; color: #8F1414; font-size: 15px; font-weight: 600; line-height: 22px">
+                <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="margin-top: 2px"><path d="{{p.errIcon}}"></path></svg>
+                <span>{{p.error}}</span>
+              </div>
+            </sc-if>
+
+            <button type="submit" disabled="{{p.disabled}}" style="height: 56px; border-radius: 12px; border: 0; background: {{p.btnBg}}; color: {{p.btnFg}}; font: inherit; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px">
+              <sc-if value="{{p.loading}}" hint-placeholder-val="{{ false }}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round"><path d="M12 3a9 9 0 1 1-8.5 6"></path></svg>
+              </sc-if>
+              {{p.btn}}
+            </button>
+          </form>
+
+          <p style="margin: auto 0 0; font-size: 13px; color: #4B5563; text-align: center; line-height: 20px">Read-only monitoring. Accounts are managed by your administrator.</p>
+        </div>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2110,"height":904}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const ALERT = 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 8v5M12 16h.01';
+    const CLOCK = 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2';
+    const base = { email: '', pw: '', emailBorder: '#8A929C', pwBorder: '#8A929C', borderW: '1px', hasError: false, error: '', errIcon: ALERT, loading: false, disabled: false, btn: 'Sign in', btnBg: '#1E293B', btnFg: '#FFFFFF', formOpacity: 1, expired: false };
+    const filled = { email: 'elif.kaya@fieldops.example', pw: 'harvest2026' };
+    const phones = [
+      Object.assign({}, base, { title: '1.1 Sign in', note: 'Default. Button enabled once both fields have text.' }),
+      Object.assign({}, base, filled, { title: '1.2 Loading', note: 'Fields locked, spinner in the button.', loading: true, disabled: true, btn: 'Signing in…', formOpacity: 1, btnBg: '#475569' }),
+      Object.assign({}, base, filled, { title: '1.3 Invalid credentials', note: 'Generic message: never says which field is wrong.', hasError: true, error: 'Invalid email or password.', emailBorder: '#B91C1C', pwBorder: '#B91C1C', borderW: '2px' }),
+      Object.assign({}, base, filled, { title: '1.4 Rate limited', note: 'Button disabled until the cooldown ends.', hasError: true, error: 'Too many attempts, try again in a minute.', errIcon: CLOCK, disabled: true, btn: 'Try again in 0:48', btnBg: '#D5D9DE', btnFg: '#374151' }),
+      Object.assign({}, base, { email: 'elif.kaya@fieldops.example', title: '1.5 Session expired', note: 'Shown after a 401 on refresh. Email prefilled.', expired: true })
+    ];
+    return { phones };
+  }
+}
+</script>
+</body>
+</html>

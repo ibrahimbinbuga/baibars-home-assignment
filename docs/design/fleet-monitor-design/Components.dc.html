@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor · Component sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1E293B}a:hover{color:#0F172A}
+.tn{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.h{margin:0 0 4px;font-size:20px;font-weight:700}
+.sub{margin:0 0 16px;font-size:14px;color:#4B5563}
+.cap{font-size:12px;font-weight:700;color:#4B5563;text-transform:uppercase;letter-spacing:.05em}
+.badge{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 8px;border-radius:6px;font-size:14px;font-weight:600;white-space:nowrap;border:1px solid transparent}
+.badge.lg{height:40px;gap:8px;padding:0 14px 0 12px;border-radius:8px;font-size:17px;font-weight:700}
+.card{display:flex;flex-direction:column;gap:12px;padding:14px 16px;background:#FFFFFF;border:1px solid #D5D9DE;border-radius:12px;color:#111827;width:358px}
+.card.muted{background:#EEF0F2;border-color:#C9CED4}
+.card.muted .vname{color:#374151}
+.card.stale{border-style:dashed;border-color:#9F8BD6}
+.vname{font-size:18px;font-weight:700;line-height:24px}
+.vsub{font-size:14px;color:#4B5563;line-height:20px}
+.mrow{display:flex;align-items:center;gap:16px;font-size:15px}
+.m{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.upd{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:13px;color:#4B5563}
+.tile{background:#FFFFFF;border:1px solid #D5D9DE;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-height:96px;width:175px}
+.tl{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#4B5563}
+.tv{font-size:26px;font-weight:700;line-height:32px}
+.tv small{font-size:15px;font-weight:600;color:#4B5563;margin-left:3px}
+.chip{height:48px;border-radius:8px;border:1px solid #8A929C;background:#FFFFFF;display:inline-flex;align-items:center;gap:6px;padding:0 14px;font:inherit;font-size:14px;font-weight:600;color:#1F2937;white-space:nowrap}
+.chip.on{background:#1E293B;border-color:#1E293B;color:#FFFFFF}
+.sum{height:52px;width:114px;border-radius:10px;border:1px solid #D5D9DE;background:#FFFFFF;display:flex;align-items:center;gap:8px;padding:0 10px;font:inherit;color:#111827}
+.sum.on{border:2px solid #1E293B;padding:0 9px}
+.panel{background:#FFFFFF;border:1px solid #D5D9DE;border-radius:16px;padding:24px}
+</style>
+</helmet>
+<div style="width: 1720px; min-height: 1780px; background: #F4F5F2; padding: 56px 64px; display: flex; flex-direction: column; gap: 32px">
+  <div>
+    <h1 style="margin: 0; font-size: 36px; font-weight: 700">Component sheet</h1>
+    <p style="margin: 6px 0 0; font-size: 16px; color: #4B5563">Every status is colour + icon + text. Tap targets ≥ 48 px. Values use tabular figures.</p>
+  </div>
+
+  <section class="panel">
+    <h2 class="h">Status badge</h2>
+    <p class="sub">StatusBadge(status, size: small | large). Small in cards and lists, large in the detail header. Stale is client-side: online but no update for &gt; 30 s.</p>
+    <div style="display: grid; grid-template-columns: 120px repeat(6, minmax(0, 1fr)); gap: 16px; align-items: center">
+      <span class="cap">Small · 30</span>
+      <sc-for list="{{statuses}}" as="s" hint-placeholder-count="6">
+        <span><span class="badge" style="background: {{s.t}}; color: {{s.c}}; border-color: {{s.border}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="{{s.icon}}"></path></svg>{{s.label}}</span></span>
+      </sc-for>
+      <span class="cap">Large · 40</span>
+      <sc-for list="{{statuses}}" as="s" hint-placeholder-count="6">
+        <span><span class="badge lg" style="background: {{s.t}}; color: {{s.c}}; border-color: {{s.border}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="{{s.icon}}"></path></svg>{{s.label}}</span></span>
+      </sc-for>
+      <span class="cap">Text / tint</span>
+      <sc-for list="{{statuses}}" as="s" hint-placeholder-count="6">
+        <span class="tn" style="font-size: 13px; color: #374151">{{s.c}} / {{s.t}}<br>{{s.ratio}}</span>
+      </sc-for>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h">Vehicle card</h2>
+    <p class="sub">VehicleCard(vehicle). Whole card is the tap target (min 96 px tall). Stale and Offline are muted: grey surface; Stale also gets a dashed outline.</p>
+    <div style="display: flex; gap: 24px">
+      <sc-for list="{{cards}}" as="v" hint-placeholder-count="4">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span class="cap">{{v.caption}}</span>
+          <div class="card {{v.cls}}">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+              <div><div class="vname">{{v.name}}</div><div class="vsub">{{v.fleet}}</div></div>
+              <span class="badge" style="background: {{v.t}}; color: {{v.c}}; border-color: {{v.border}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="{{v.icon}}"></path></svg>{{v.label}}</span>
+            </div>
+            <sc-if value="{{v.hasData}}" hint-placeholder-val="{{ true }}">
+              <div class="mrow">
+                <span class="m" style="color: {{v.mc}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2"></path></svg><span class="tn">{{v.bat}}</span></span>
+                <span class="m" style="color: {{v.mc}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"></path></svg><span class="tn">{{v.spd}}</span></span>
+                <span class="upd tn" style="color: {{v.uc}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 14px; height: 14px"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2"></path></svg>{{v.upd}}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{v.noData}}" hint-placeholder-val="{{ false }}">
+              <div class="mrow"><span class="m" style="color: #4B5563"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M8 12h8"></path></svg>No data yet</span><span class="upd">Never reported</span></div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 class="h">Metric tile</h2>
+    <p class="sub">MetricTile(label, value, unit, icon, variant: normal | warning | empty). Warning used for battery &lt; 20 %.</p>
+    <div style="display: flex; gap: 16px; align-items: flex-start">
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="cap">Speed</span>
+        <div class="tile"><span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 14l4-4M3.34 19a10 10 0 1 1 17.32 0"></path></svg>Speed</span><span class="tv tn">12.4<small>km/h</small></span></div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="cap">Heading</span>
+        <div class="tile"><span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M16 8l-2 6-6 2 2-6 6-2Z"></path></svg>Heading</span>
+          <span style="display: flex; align-items: center; gap: 10px"><span style="width: 32px; height: 32px; border-radius: 16px; border: 1.5px solid #9CA3AF; display: flex; align-items: center; justify-content: center"><svg viewBox="0 0 24 24" width="20" height="20" role="img" aria-label="Heading 312 degrees NW" style="transform: rotate(312deg)"><path d="M12 2 18 20 12 16 6 20Z" fill="#1E293B"></path></svg></span><span class="tv tn">312°<small>NW</small></span></span></div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="cap">Battery · normal</span>
+        <div class="tile"><span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2"></path></svg>Battery</span><span class="tv tn">78<small>%</small></span><span style="height: 8px; border-radius: 4px; background: #E5E7EB; overflow: hidden"><span style="display: block; height: 8px; width: 78%; background: #111827"></span></span></div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="cap">Battery · warning</span>
+        <div class="tile" style="background: #FDE7E7; border-color: #E9A8A8"><span class="tl" style="color: #8F1414"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2M6 10v4"></path></svg>Low battery</span><span class="tv tn" style="color: #B91C1C">18<small style="color: #B91C1C">%</small></span><span style="height: 8px; border-radius: 4px; background: #F5C2C2; overflow: hidden"><span style="display: block; height: 8px; width: 18%; background: #B91C1C"></span></span></div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="cap">Coordinates</span>
+        <div class="tile"><span class="tl"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21ZM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"></path></svg>Coordinates</span><span class="tn" style="font-size: 17px; font-weight: 700; line-height: 24px">36.9182° N<br>34.8927° E</span></div></div>
+      <div style="display: flex; flex-direction: column; gap: 8px"><span class="cap">Empty</span>
+        <div class="tile" style="background: #EEF0F2"><span class="tl">Speed</span><span class="tv" style="color: #6B7280">—</span></div></div>
+    </div>
+  </section>
+
+  <div style="display: grid; grid-template-columns: 560px minmax(0, 1fr); gap: 32px; align-items: start">
+    <section class="panel">
+      <h2 class="h">Activity row</h2>
+      <p class="sub">ActivityRow(event). 64 px min height; absolute time + relative time.</p>
+      <div style="border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden">
+        <sc-for list="{{events}}" as="e" hint-placeholder-count="5">
+          <div style="min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-top: {{e.bt}}; background: #FFFFFF">
+            <span style="width: 40px; height: 40px; border-radius: 20px; background: {{e.tint}}; color: {{e.color}}; display: flex; align-items: center; justify-content: center; flex: none"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 20px; height: 20px"><path d="{{e.icon}}"></path></svg></span>
+            <div style="flex: 1"><div style="font-size: 15px; font-weight: 600">{{e.title}}</div><div style="font-size: 14px; color: #4B5563">{{e.detail}}</div></div>
+            <div class="tn" style="text-align: right"><div style="font-size: 14px; font-weight: 600">{{e.time}}</div><div style="font-size: 13px; color: #4B5563">{{e.ago}}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-direction: column; gap: 32px">
+      <section class="panel">
+        <h2 class="h">Connection banner</h2>
+        <p class="sub">ConnectionBanner(state). Sits directly under the app bar on List and Detail; pushes content down, never covers it.</p>
+        <div style="display: flex; gap: 24px; align-items: flex-start">
+          <div style="width: 358px; display: flex; flex-direction: column; gap: 8px"><span class="cap">Connected</span>
+            <div style="height: 40px; border: 1px dashed #9CA3AF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #4B5563">Nothing shown</div></div>
+          <div style="width: 358px; display: flex; flex-direction: column; gap: 8px"><span class="cap">Reconnecting · 40 px</span>
+            <div role="status" style="height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 16px; background: #FDF3DC; border: 1px solid #E8C77A; color: #5C3600; font-size: 14px; font-weight: 600"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"></path></svg><span>Reconnecting…</span><span style="margin-left: auto; font-weight: 500; font-size: 13px">Data may be outdated</span></div></div>
+          <div style="width: 358px; display: flex; flex-direction: column; gap: 8px"><span class="cap">Disconnected · 56 px</span>
+            <div role="alert" style="height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 4px 0 16px; background: #1F2937; color: #FFFFFF; font-size: 14px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"></path></svg><span style="flex: 1; line-height: 18px"><b>Disconnected</b><br><span style="font-size: 13px; color: #D1D5DB">Live updates paused since 14:31</span></span><button style="height: 48px; padding: 0 16px; border: 0; background: transparent; color: #FFFFFF; font: inherit; font-size: 15px; font-weight: 700; text-decoration: underline">Retry</button></div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="h">Map marker</h2>
+        <p class="sub">Shape encodes status, so markers read without colour. Moving rotates with heading. 36 px drawn, 48 px hit area; selected = 48 px with ring.</p>
+        <div style="display: flex; gap: 28px; align-items: flex-end">
+          <sc-for list="{{markers}}" as="m" hint-placeholder-count="7">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; width: 76px">
+              <svg viewBox="0 0 40 40" width="{{m.size}}" height="{{m.size}}" aria-hidden="true" style="overflow: visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35))">
+                <path d="M20 -6a26 26 0 1 0 0.01 0Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="3" opacity="{{m.ring}}"></path>
+                <path d="{{m.shape}}" fill="{{m.fill}}" stroke="{{m.stroke}}" stroke-width="2.5" stroke-dasharray="{{m.dash}}"></path>
+                <g transform="{{m.iconT}}"><path d="{{m.icon}}" fill="none" stroke="{{m.iconC}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></g>
+              </svg>
+              <span style="font-size: 13px; font-weight: 600; text-align: center">{{m.label}}</span>
+              <span style="font-size: 12px; color: #4B5563; text-align: center">{{m.shapeName}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2 class="h">Filter chip &amp; summary count</h2>
+        <p class="sub">48 px tall. Selected = filled ink + check. Fleet chip only when the user has &gt; 1 fleet. Summary counts toggle the same filter.</p>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap">
+          <button class="chip">Idle</button>
+          <button class="chip on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg>Fault</button>
+          <button class="chip">All fleets<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <button class="chip on">Adana Field Ops<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+          <span style="width: 1px; height: 40px; background: #C9CED4; margin: 0 8px"></span>
+          <button class="sum"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: #137333; width: 20px; height: 20px"><path d="M12 3 19 20 12 16.5 5 20Z"></path></svg><span class="tn" style="font-size: 20px; font-weight: 700">3</span><span style="font-size: 13px; font-weight: 600; color: #374151">Moving</span></button>
+          <button class="sum on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: #B91C1C; width: 20px; height: 20px"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01"></path></svg><span class="tn" style="font-size: 20px; font-weight: 700">1</span><span style="font-size: 13px; font-weight: 600; color: #374151">Fault</span></button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1720,"height":1780}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      moving: 'M12 3 19 20 12 16.5 5 20Z',
+      idle: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M10 9v6M14 9v6',
+      charging: 'M13 2 4 14h7l-1 8 9-12h-7Z',
+      fault: 'M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01',
+      offline: 'M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01',
+      stale: 'M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 7v5l3 2',
+      online: 'M5 12.9a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 20 0M12 20h.01',
+      state: 'M7 7h13l-4-4M17 17H4l4 4',
+      lowbat: 'M4 7h13a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2ZM22 11v2M6 10v4'
+    };
+    const statuses = [
+      { k: 'moving', label: 'Moving', c: '#137333', t: '#E7F6EC', ratio: '5.95:1 on white' },
+      { k: 'idle', label: 'Idle', c: '#975400', t: '#FDF3DC', ratio: '5.86:1 on white' },
+      { k: 'charging', label: 'Charging', c: '#1D4ED8', t: '#E3ECFD', ratio: '6.70:1 on white' },
+      { k: 'fault', label: 'Fault', c: '#B91C1C', t: '#FDE7E7', ratio: '6.47:1 on white' },
+      { k: 'offline', label: 'Offline', c: '#4B5563', t: '#ECEEF1', ratio: '7.56:1 on white' },
+      { k: 'stale', label: 'Stale', c: '#6D28D9', t: '#EFEAFC', ratio: '7.10:1 on white' }
+    ].map((s) => Object.assign(s, { icon: I[s.k], border: s.k === 'stale' ? '#B9A6EA' : 'transparent' }));
+    const st = (k) => statuses.find((s) => s.k === k);
+    const cards = [
+      Object.assign({}, st('moving'), { caption: 'Normal', name: 'TR-01', fleet: 'Tarsus Field Ops', cls: '', hasData: true, noData: false, bat: '78%', spd: '12.4 km/h', upd: 'updated 4s ago', mc: '#111827', uc: '#4B5563' }),
+      Object.assign({}, st('stale'), { caption: 'Stale (> 30 s)', name: 'TR-06', fleet: 'Tarsus Field Ops', cls: 'muted stale', hasData: true, noData: false, bat: '44%', spd: '7.2 km/h', upd: 'last seen 2m ago', mc: '#4B5563', uc: '#6D28D9' }),
+      Object.assign({}, st('offline'), { caption: 'Offline', name: 'AD-03', fleet: 'Adana Field Ops', cls: 'muted', hasData: true, noData: false, bat: '23%', spd: '— km/h', upd: 'last seen 3h ago', mc: '#4B5563', uc: '#4B5563' }),
+      Object.assign({}, st('offline'), { caption: 'No data yet', name: 'AD-05', fleet: 'Adana Field Ops', cls: 'muted', hasData: false, noData: true })
+    ];
+    const events = [
+      { title: 'Came online', detail: 'Link restored', icon: I.online, tint: '#E7F6EC', color: '#137333', time: '14:29:51', ago: '5m ago' },
+      { title: 'Went offline', detail: 'No signal for 30 s', icon: I.offline, tint: '#ECEEF1', color: '#4B5563', time: '14:12:40', ago: '22m ago' },
+      { title: 'State changed', detail: 'Idle → Moving', icon: I.state, tint: '#E2E8F0', color: '#1E293B', time: '14:32:08', ago: '2m ago' },
+      { title: 'Low battery', detail: 'Battery at 18%', icon: I.lowbat, tint: '#FDF3DC', color: '#975400', time: '14:30:44', ago: '3m ago' },
+      { title: 'Fault raised', detail: 'Drive motor overcurrent (E-214)', icon: I.fault, tint: '#FDE7E7', color: '#B91C1C', time: '14:26:19', ago: '6m ago' }
+    ].map((e, i) => Object.assign(e, { bt: i ? '1px solid #E5E7EB' : '0' }));
+    const SH = {
+      circle: 'M20 2a18 18 0 1 0 0.01 0Z',
+      square: 'M7 3h26a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z',
+      diamond: 'M20 0 40 20 20 40 0 20Z',
+      triangle: 'M17.4 3.5a3 3 0 0 1 5.2 0l16.4 29A3 3 0 0 1 36.4 37H3.6A3 3 0 0 1 1 32.5Z'
+    };
+    const mk = (label, shapeName, shape, fill, stroke, icon, iconT, iconC, extra) => Object.assign({ label, shapeName, shape, fill, stroke, icon, iconT, iconC, dash: 'none', size: 36, ring: 0 }, extra || {});
+    const markers = [
+      mk('Moving', 'Circle + arrow', SH.circle, '#137333', '#FFFFFF', I.moving, 'rotate(45 20 20) translate(8 8)', '#FFFFFF'),
+      mk('Idle', 'Square + pause', SH.square, '#975400', '#FFFFFF', 'M9 7v10M15 7v10', 'translate(8 8)', '#FFFFFF'),
+      mk('Charging', 'Diamond + bolt', SH.diamond, '#1D4ED8', '#FFFFFF', I.charging, 'translate(8 8)', '#FFFFFF'),
+      mk('Fault', 'Triangle + !', SH.triangle, '#B91C1C', '#FFFFFF', 'M12 7v6M12 17h.01', 'translate(8 11)', '#FFFFFF'),
+      mk('Offline', 'Hollow circle', SH.circle, '#FFFFFF', '#4B5563', I.offline, 'translate(10 10) scale(0.84)', '#4B5563'),
+      mk('Stale', 'Last shape, dashed', SH.circle, '#FFFFFF', '#6D28D9', I.moving, 'translate(8 8)', '#6D28D9', { dash: '4 3' }),
+      mk('Selected', '48 px + ring', SH.circle, '#137333', '#FFFFFF', I.moving, 'rotate(312 20 20) translate(8 8)', '#FFFFFF', { size: 48, ring: 1 })
+    ];
+    return { statuses, cards, events, markers };
+  }
+}
+</script>
+</body>
+</html>

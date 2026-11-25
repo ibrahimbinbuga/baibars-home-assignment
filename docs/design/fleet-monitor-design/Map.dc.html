@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fleet Monitor · Map</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1E293B}a:hover{color:#0F172A}
+.tn{font-variant-numeric:tabular-nums}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn{width:48px;height:48px;border:0;background:transparent;border-radius:24px;display:flex;align-items:center;justify-content:center;color:#111827;padding:0;font:inherit;text-decoration:none}
+.mapbtn{width:48px;height:48px;border:1px solid #C9CED4;background:#FFFFFF;display:flex;align-items:center;justify-content:center;color:#111827;padding:0}
+.badge{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px 0 8px;border-radius:6px;font-size:14px;font-weight:600;white-space:nowrap}
+.nav{height:80px;flex:none;background:#FFFFFF;border-top:1px solid #D5D9DE;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));position:relative;z-index:3}
+.navi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-decoration:none;color:#4B5563;font-size:13px;font-weight:600}
+.navi .pill{width:64px;height:32px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.navi.on{color:#111827}
+.navi.on .pill{background:#DDE3EA}
+.tag{margin-top:2px;padding:1px 6px;border-radius:4px;background:#FFFFFF;border:1px solid #9CA3AF;font-size:12px;font-weight:700;color:#111827;white-space:nowrap}
+</style>
+</helmet>
+<div style="width: 820px; height: 904px; display: flex; gap: 40px; align-items: flex-start">
+  <sc-for list="{{phones}}" as="p" hint-placeholder-count="2">
+    <div style="width: 390px; flex: none; display: flex; flex-direction: column">
+      <div style="height: 48px">
+        <div style="font-size: 16px; font-weight: 700">{{p.title}}</div>
+        <div style="font-size: 13px; color: #4B5563">{{p.note}}</div>
+      </div>
+      <div style="width: 390px; height: 844px; background: #F2EFE9; display: flex; flex-direction: column; overflow: hidden; position: relative; border-radius: 4px; outline: 1px solid #C9CED4">
+        <header style="height: 64px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 16px; background: #FFFFFF; border-bottom: 1px solid #D5D9DE; position: relative; z-index: 3">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700; flex: 1">Vehicles</h2>
+          <a href="Account.dc.html" class="iconbtn" aria-label="Account"><span style="width: 36px; height: 36px; border-radius: 18px; background: #1E293B; color: #FFFFFF; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center">EK</span></a>
+        </header>
+
+        <div style="flex: 1; position: relative; overflow: hidden">
+          <svg viewBox="0 0 390 700" width="390" height="700" aria-hidden="true" style="position: absolute; inset: 0">
+            <rect width="390" height="700" fill="#F2EFE9"></rect>
+            <path d="M0 0h140l-10 120L0 150Z" fill="#E0DFDF"></path>
+            <path d="M150 40h110l20 90-120 20Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+            <path d="M290 30h100v140l-90 10Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+            <path d="M20 190l110-20 20 120-120 20Z" fill="#CDEBB0" stroke="#B6D69A"></path>
+            <path d="M170 170l100-10 10 120-110 10Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+            <path d="M290 200l100-10v150l-90 10Z" fill="#AEDFA3" stroke="#97C98C"></path>
+            <path d="M10 360l120-10 10 130-130 10Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+            <path d="M160 370l110-10 10 140-120 10Z" fill="#CDEBB0" stroke="#B6D69A"></path>
+            <path d="M300 390l90-10v160l-80 10Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+            <path d="M20 540l130-10 10 150H20Z" fill="#EEF0D5" stroke="#D6DAB4"></path>
+            <path d="M180 560l120-10 10 150H180Z" fill="#AEDFA3" stroke="#97C98C"></path>
+            <path d="M-10 330C80 300 120 360 200 340S320 290 400 320" fill="none" stroke="#AAD3DF" stroke-width="12"></path>
+            <path d="M150 0C150 200 145 400 160 700" fill="none" stroke="#C9C2B6" stroke-width="11"></path>
+            <path d="M150 0C150 200 145 400 160 700" fill="none" stroke="#FCD6A4" stroke-width="8"></path>
+            <path d="M0 160C120 165 260 150 390 185" fill="none" stroke="#C9C2B6" stroke-width="9"></path>
+            <path d="M0 160C120 165 260 150 390 185" fill="none" stroke="#FFFFFF" stroke-width="6"></path>
+            <path d="M0 515C130 505 270 530 390 545" fill="none" stroke="#C9C2B6" stroke-width="8"></path>
+            <path d="M0 515C130 505 270 530 390 545" fill="none" stroke="#FFFFFF" stroke-width="5"></path>
+            <path d="M285 0 280 700" fill="none" stroke="#D6CFC4" stroke-width="3" stroke-dasharray="6 4"></path>
+            <text x="22" y="70" font-size="14" font-weight="600" fill="#4A4A4A" font-family="Inter, sans-serif">Tarsus</text>
+            <text x="200" y="352" font-size="11" font-style="italic" fill="#3B6E8A" font-family="Inter, sans-serif">Berdan</text>
+          </svg>
+
+          <div role="status" style="position: absolute; top: 12px; left: 12px; right: 72px; min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #FFFFFF; border: 1px solid #C9CED4; border-radius: 10px; font-size: 14px; font-weight: 600; color: #1F2937; box-shadow: 0 1px 3px rgba(17,24,39,.12)">
+            <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="color: #4B5563"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18M12 11v5M12 8h.01"></path></svg>
+            2 vehicles have no location yet
+          </div>
+
+          <div style="position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(17,24,39,.15)">
+            <button class="mapbtn" aria-label="Zoom in" style="border-radius: 10px 10px 0 0"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M12 5v14M5 12h14"></path></svg></button>
+            <button class="mapbtn" aria-label="Zoom out" style="border-top: 0; border-radius: 0"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M5 12h14"></path></svg></button>
+            <button class="mapbtn" aria-label="Fit all vehicles" style="border-top: 0; border-radius: 0 0 10px 10px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path></svg></button>
+          </div>
+
+          <sc-for list="{{p.markers}}" as="m" hint-placeholder-count="9">
+            <button aria-label="{{m.aria}}" style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; background: transparent; border: 0; padding: 0; min-width: 48px; min-height: 48px">
+              <svg viewBox="0 0 40 40" width="{{m.size}}" height="{{m.size}}" aria-hidden="true" style="overflow: visible; filter: drop-shadow(0 1px 2px rgba(0,0,0,.35))">
+                <path d="M20 -6a26 26 0 1 0 0.01 0Z" fill="#FFFFFF" stroke="#1E293B" stroke-width="3" opacity="{{m.ring}}"></path>
+                <path d="{{m.shape}}" fill="{{m.fill}}" stroke="{{m.stroke}}" stroke-width="2.5" stroke-dasharray="{{m.dash}}"></path>
+                <g transform="{{m.iconT}}"><path d="{{m.icon}}" fill="none" stroke="{{m.iconC}}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></g>
+              </svg>
+              <span class="tag">{{m.name}}</span>
+            </button>
+          </sc-for>
+
+          <sc-if value="{{p.legend}}" hint-placeholder-val="{{ true }}">
+            <div style="position: absolute; left: 12px; right: 12px; bottom: 32px; background: #FFFFFF; border: 1px solid #C9CED4; border-radius: 12px; padding: 10px 12px; display: flex; justify-content: space-between; box-shadow: 0 1px 3px rgba(17,24,39,.12)">
+              <sc-for list="{{legend}}" as="l" hint-placeholder-count="5">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: #1F2937">
+                  <svg viewBox="0 0 40 40" width="24" height="24" aria-hidden="true"><path d="{{l.shape}}" fill="{{l.fill}}" stroke="{{l.stroke}}" stroke-width="2.5" stroke-dasharray="{{l.dash}}"></path><g transform="{{l.iconT}}"><path d="{{l.icon}}" fill="none" stroke="{{l.iconC}}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>
+                  {{l.label}}
+                </div>
+              </sc-for>
+            </div>
+            <div style="position: absolute; right: 0; bottom: 0; background: rgba(255,255,255,.9); padding: 3px 8px; font-size: 11px; color: #374151">© OpenStreetMap contributors</div>
+          </sc-if>
+
+          <sc-if value="{{p.sheet}}" hint-placeholder-val="{{ false }}">
+            <section aria-label="TR-01 preview" style="position: absolute; left: 0; right: 0; bottom: 0; background: #FFFFFF; border-radius: 16px 16px 0 0; box-shadow: 0 -4px 16px rgba(17,24,39,.18); padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 14px">
+              <div style="width: 36px; height: 4px; border-radius: 2px; background: #9CA3AF; align-self: center"></div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+                <div>
+                  <div style="font-size: 22px; font-weight: 700; line-height: 28px">TR-01</div>
+                  <div style="font-size: 14px; color: #4B5563">Tarsus Field Ops · AgriRover X</div>
+                </div>
+                <span class="badge" style="background: #E7F6EC; color: #137333"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 20 12 16.5 5 20Z"></path></svg>Moving</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+                <div><div style="font-size: 12px; color: #4B5563; font-weight: 600">Battery</div><div class="tn" style="font-size: 17px; font-weight: 700">78%</div></div>
+                <div><div style="font-size: 12px; color: #4B5563; font-weight: 600">Speed</div><div class="tn" style="font-size: 17px; font-weight: 700">12.4 km/h</div></div>
+                <div><div style="font-size: 12px; color: #4B5563; font-weight: 600">Heading</div><div class="tn" style="font-size: 17px; font-weight: 700">312° NW</div></div>
+                <div><div style="font-size: 12px; color: #4B5563; font-weight: 600">Updated</div><div class="tn" style="font-size: 17px; font-weight: 700">4s ago</div></div>
+              </div>
+              <a href="Detail.dc.html" style="height: 52px; border-radius: 12px; background: #1E293B; color: #FFFFFF; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none">View details<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+            </section>
+          </sc-if>
+        </div>
+
+        <nav class="nav" aria-label="Views">
+          <a href="Main.dc.html" class="navi"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"></path></svg></span>List</a>
+          <a href="Map.dc.html" class="navi on" aria-current="page"><span class="pill"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width: 22px; height: 22px"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2ZM9 4v14M15 6v14"></path></svg></span>Map</a>
+        </nav>
+      </div>
+    </div>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":904}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const I = {
+      moving: 'M12 3 19 20 12 16.5 5 20Z',
+      idle: 'M9 7v10M15 7v10',
+      charging: 'M13 2 4 14h7l-1 8 9-12h-7Z',
+      fault: 'M12 7v6M12 17h.01',
+      offline: 'M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8A15 15 0 0 0 10.7 5M12 20h.01'
+    };
+    const SH = {
+      circle: 'M20 2a18 18 0 1 0 0.01 0Z',
+      square: 'M7 3h26a4 4 0 0 1 4 4v26a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Z',
+      diamond: 'M20 0 40 20 20 40 0 20Z',
+      triangle: 'M17.4 3.5a3 3 0 0 1 5.2 0l16.4 29A3 3 0 0 1 36.4 37H3.6A3 3 0 0 1 1 32.5Z'
+    };
+    const M = {
+      moving: { label: 'Moving', shape: SH.circle, fill: '#137333', stroke: '#FFFFFF', iconC: '#FFFFFF' },
+      idle: { label: 'Idle', shape: SH.square, fill: '#975400', stroke: '#FFFFFF', iconC: '#FFFFFF' },
+      charging: { label: 'Charging', shape: SH.diamond, fill: '#1D4ED8', stroke: '#FFFFFF', iconC: '#FFFFFF' },
+      fault: { label: 'Fault', shape: SH.triangle, fill: '#B91C1C', stroke: '#FFFFFF', iconC: '#FFFFFF' },
+      offline: { label: 'Offline', shape: SH.circle, fill: '#FFFFFF', stroke: '#4B5563', iconC: '#4B5563' }
+    };
+    const mk = (st, extra) => {
+      const m = M[st];
+      const heading = extra.heading;
+      const iconT = st === 'moving' ? 'rotate(' + (heading || 0) + ' 20 20) translate(8 8)' : (st === 'fault' ? 'translate(8 11)' : (st === 'offline' ? 'translate(10 10) scale(0.84)' : 'translate(8 8)'));
+      return Object.assign({ label: m.label, shape: m.shape, fill: m.fill, stroke: m.stroke, iconC: m.iconC, icon: I[st], iconT, dash: 'none' }, extra);
+    };
+    const list = (selected) => [
+      ['TR-03', 'charging', 64, 246, {}], ['AD-01', 'moving', 336, 120, { heading: 40 }], ['AD-02', 'idle', 318, 258, {}],
+      ['TR-01', 'moving', 118, 300, { heading: 312 }], ['TR-06', 'moving', 248, 300, { heading: 180, stale: true }],
+      ['TR-05', 'moving', 222, 420, { heading: 95 }], ['TR-02', 'idle', 74, 440, {}],
+      ['TR-04', 'fault', 196, 560, {}], ['AD-03', 'offline', 338, 470, {}]
+    ].map(([name, st, x, y, o]) => {
+      const sel = name === selected;
+      const base = mk(st, { heading: o.heading });
+      if (o.stale) { base.fill = '#FFFFFF'; base.stroke = '#6D28D9'; base.iconC = '#6D28D9'; base.dash = '4 3'; }
+      return Object.assign(base, {
+        name, x, y, size: sel ? 48 : 36, ring: sel ? 1 : 0,
+        aria: name + ', ' + (o.stale ? 'Stale, last seen 2m ago' : M[st].label)
+      });
+    });
+    const legend = ['moving', 'idle', 'charging', 'fault', 'offline'].map((k) => mk(k, { heading: 0 }))
+      .concat([Object.assign(mk('moving', { heading: 0 }), { label: 'Stale', fill: '#FFFFFF', stroke: '#6D28D9', iconC: '#6D28D9', dash: '4 3' })]);
+    const phones = [
+      { title: '3.1 Map · all vehicles', note: 'Shape + icon + colour per status. Stale = dashed outline.', markers: list(''), legend: true, sheet: false },
+      { title: '3.2 Marker tapped', note: 'Selected marker enlarges with a ring; preview sheet.', markers: list('TR-01'), legend: false, sheet: true }
+    ];
+    return { phones, legend };
+  }
+}
+</script>
+</body>
+</html>
