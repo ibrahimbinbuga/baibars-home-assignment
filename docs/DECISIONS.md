@@ -71,3 +71,49 @@
   to stored values. It is not signed: a modified cursor can only move within the caller's own scoped data, and a
   malformed one is a 400.
 - **Timestamps from query strings are converted to UTC** before querying (Npgsql only accepts UTC for `timestamptz`).
+
+## Ingestion & offline detection
+- **Duplicates: `INSERT … ON CONFLICT ("VehicleId", "Sequence") DO NOTHING`, not catching error 23505.** A repeated
+  sample is a normal event (device retries after a timeout), not an error. With `ON CONFLICT` a duplicate is just
+  "0 rows inserted": no exception, Postgres logs no `ERROR` line per duplicate, and the transaction stays usable, so
+  the code is a straight line. It is still race-safe (the unique index decides). Cost: one hand-written SQL statement,
+  kept in one method and covered by the duplicate tests.
+- **Device authentication is its own scheme** (`DeviceKey` authentication handler) next to JWT. User tokens can't
+  ingest; device keys can't read user endpoints; the vehicle id comes only from the key.
+- **One transaction per sample**, `xmin` as optimistic concurrency token on the vehicle row. On a conflict the whole
+  attempt is rolled back, the vehicle is re-read and the attempt is retried once; a second conflict returns 503 and the
+  device retries the same sample (idempotent by sequence). Conflicts are rare (one sender per vehicle); the realistic
+  source is the offline detector writing the same row.
+- **Offline detection vs. ingestion race.** The detector reads stale vehicles, then writes each one with the `xmin` it
+  read. If a sample arrived in between, the row changed, the update matches nothing, and that vehicle is skipped:
+  it just reported in. Each vehicle is its own `SaveChanges`, so one conflict doesn't undo the others.
+- **Offline window 30–35 s**: threshold 30 s, check every 5 s. A shorter interval tightens the window at the cost of
+  more queries (one indexed query per pass).
+- **Broadcasts only after commit**, never inside the transaction, so clients never see data that might be rolled back.
+  The pushed `VehicleDto` is re-read with the same projection as `GET /vehicles/{id}`. A failed broadcast is logged
+  and not retried: the data is safe, and clients re-fetch the snapshot on reconnect.
+- **Event rules**: `FaultRaised` only when entering Fault (a 20 s fault = 1 event, not 10); no `StateChanged` on the
+  first sample (`CameOnline` covers it); `LowBattery` on crossing below 20 %, re-armed after recovering.
+- **All event timestamps are server time.** Device clocks drift; one clock keeps the activity order and the cursor
+  consistent. The device time is kept in `TelemetryRecord.RecordedAt`.
+- **Clock-skew guard**: `recordedAt` more than 5 min in the future is rejected, otherwise a device with a fast clock
+  would block newer real samples from becoming the latest state.
+
+## Simulator
+- **Separate process calling the real ingest endpoint** with each vehicle's key, so it exercises the same path a real
+  vehicle would; stopping it demonstrates offline detection.
+- **Sequence starts at the current Unix time in ms**, +1 per sample. A real device keeps its counter in flash; with an
+  in-memory counter starting at 1, a restarted simulator would only send duplicates and vehicles would never come back
+  Online.
+- **Plain `HttpClient` with a manual retry loop** (1, 2, 4, 8, max 10 s) for network errors, 5xx and 429, resending the
+  same sample. No resilience library: the logic is ~20 lines and easy to read.
+- **Options validated with `Validator.TryValidateObject`** instead of `ValidateDataAnnotations()`, which would need one
+  more package in the simulator.
+- **`SN-0004` drops out for 45 s every 3 minutes** to show offline detection without touching Docker.
+
+## Logging
+- Single-line console logs with timestamps, so `docker compose logs -f` is readable.
+- API: per-sample ingestion at Debug; activity events (CameOnline/WentOffline/StateChanged/…) at Information;
+  503 after retries at Warning. EF Core and ASP.NET Core framework logs at Warning (migrations at Information).
+- Simulator: each send at Debug; startup, state changes, dropout start/end at Information; retries at Warning;
+  rejected samples at Error.

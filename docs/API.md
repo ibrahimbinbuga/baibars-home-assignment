@@ -5,7 +5,7 @@ Base URL: `http://localhost:8080`. JSON is camelCase; enums are strings. Errors 
 
 All endpoints require `Authorization: Bearer <accessToken>` unless marked **anonymous**.
 
-> Sections for ingestion (Phase 3) and the SignalR hub (Phase 4) are added when those are built.
+> The SignalR hub section is added in Phase 4.
 
 ## Health
 
@@ -62,6 +62,9 @@ Vehicles in scope with their latest state, sorted by fleet name, then vehicle na
 }
 ```
 - `status` is `Offline` when `connectivity` is `Offline`, otherwise the state last reported by the vehicle.
+- `connectivity` is decided by the server: a vehicle with no telemetry for **30 s** is marked `Offline`. The check runs
+  every 5 s, so a vehicle that stops reporting shows as `Offline` **30–35 s** after its last sample
+  (`Telemetry:OfflineThresholdSeconds`, `Telemetry:OfflineCheckIntervalSeconds`).
 - A vehicle that never sent telemetry has `status: "Offline"` and `null` location, metrics and timestamps.
 - `lastTelemetryAt` is the vehicle's clock; `lastSeenAt` is the server's clock when the last sample arrived.
 
@@ -112,3 +115,50 @@ Activity events, **newest first**, with cursor pagination.
 - `nextBefore` is `null` on the last page.
 - Order is (`occurredAt` desc, `id` desc). The cursor holds both, so events with the same timestamp are never skipped
   or repeated across pages.
+
+## Ingestion (vehicles → API)
+
+### `POST /api/ingest/telemetry` — device key
+Authenticated with header **`X-Device-Key: <key>`**, not a user token. The key identifies the vehicle; the body cannot
+choose which vehicle it writes to (a `vehicleId` field is ignored). A user JWT is not accepted here, and a device key
+is not accepted on any other endpoint.
+
+```json
+{
+  "sequence": 1042,
+  "recordedAt": "2026-11-26T10:00:00Z",
+  "latitude": 36.92, "longitude": 34.89,
+  "speedKmh": 12.4, "headingDeg": 270, "batteryPct": 76,
+  "state": "Moving"
+}
+```
+
+| Field | Rule |
+|---|---|
+| all fields | required |
+| `sequence` | ≥ 0, increasing per vehicle; `(vehicle, sequence)` is unique |
+| `recordedAt` | device clock; not more than 5 minutes in the future |
+| `latitude` | [-90, 90] |
+| `longitude` | [-180, 180] |
+| `speedKmh` | ≥ 0 |
+| `headingDeg` | [0, 360) |
+| `batteryPct` | [0, 100] |
+| `state` | `Moving` \| `Idle` \| `Charging` \| `Fault` |
+
+| Response | Meaning |
+|---|---|
+| `202 { "duplicate": false }` | Stored. |
+| `200 { "duplicate": true }` | This sequence was already stored; nothing changed. Safe result of a retry. |
+| `400` ProblemDetails | Validation failed. Do not retry unchanged. |
+| `401` ProblemDetails | Missing or unknown device key. |
+| `503` ProblemDetails | Concurrent update of the vehicle; retry the same sample (it is never stored twice). |
+
+Processing rules:
+- Every stored sample is kept in history and refreshes `lastSeenAt`; an `Offline` vehicle becomes `Online`
+  (`CameOnline` event).
+- Only a sample newer than the current latest (`recordedAt`) updates the latest state. Late samples are history only.
+- Events (only when the latest state is updated), all timestamped with server time:
+  - `StateChanged` when the state differs from the previous sample (not on a vehicle's first sample)
+  - `FaultRaised` when the state changes into `Fault`
+  - `LowBattery` when the battery drops from ≥ 20 % (or unknown) to below 20 %; again only after it recovers to ≥ 20 %
+- Real-time updates (`VehicleUpdated`, `ActivityRaised`) are sent only after the data is committed.
