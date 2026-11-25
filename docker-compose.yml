@@ -27,7 +27,13 @@ services:
       # Production on purpose: no developer exception page. Demo features are turned on with explicit flags.
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Fleet: "Host=db;Port=5432;Database=fleet;Username=fleet;Password=fleet_demo_password"   # demo-only
+      Jwt__SigningKey: "DEMO-ONLY-compose-signing-key-replace-in-any-real-deployment"   # demo-only
       Swagger__Enabled: "true"
+      Seed__Enabled: "true"
+      Seed__DevicesFile: /config/devices.json
+    volumes:
+      # Same file the simulator reads: the seeder stores the SHA-256 of each demo device key.
+      - ./config/devices.json:/config/devices.json:ro
     ports:
       - "8080:8080"
     depends_on:

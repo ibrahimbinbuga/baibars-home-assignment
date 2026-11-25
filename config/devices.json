@@ -1,0 +1,13 @@
+{
+  "_comment": "DEMO-ONLY device keys. Shared by the API seeder (stores their SHA-256 hashes) and the simulator (sends them as X-Device-Key). In production each device is provisioned individually and its key never sits in a shared file.",
+  "vehicles": [
+    { "serialNumber": "SN-0001", "name": "TR-01", "model": "AgriRover X", "fleet": "Tarsus Field Ops", "startLatitude": 36.9180, "startLongitude": 34.8870, "deviceKey": "73667b9d7cb56df7fe5f4c93552b40d2abba7dad7259b7d4d831070822f341ff" },
+    { "serialNumber": "SN-0002", "name": "TR-02", "model": "AgriRover X", "fleet": "Tarsus Field Ops", "startLatitude": 36.9300, "startLongitude": 34.8750, "deviceKey": "5e8daf8f427fa1f11f3f4f66b2a6460f5f57b886a0ad599419a706bedc59c525" },
+    { "serialNumber": "SN-0003", "name": "TR-03", "model": "AgriRover S", "fleet": "Tarsus Field Ops", "startLatitude": 36.9050, "startLongitude": 34.9050, "deviceKey": "8b2e310deaa296f992cf6a16708be80326cb660dfe79ece6e4b15c244cb11b19" },
+    { "serialNumber": "SN-0004", "name": "TR-04", "model": "AgriRover S", "fleet": "Tarsus Field Ops", "startLatitude": 36.9400, "startLongitude": 34.9100, "deviceKey": "a07820d34e54248bba2868a39e663341b4ae75a8b44afb1693018e9f4ce47ece" },
+    { "serialNumber": "SN-0005", "name": "AD-01", "model": "AgriRover X", "fleet": "Adana Field Ops", "startLatitude": 36.9850, "startLongitude": 35.3200, "deviceKey": "e75bb9085ad403d9255225d0fad426789571a03fe4b09415ca2adcef662791b8" },
+    { "serialNumber": "SN-0006", "name": "AD-02", "model": "AgriRover X", "fleet": "Adana Field Ops", "startLatitude": 36.9980, "startLongitude": 35.3450, "deviceKey": "4d86689ef063815c1f2d46d83470bfde4177c0e4eb3f5e0739f2ac6ba83a28be" },
+    { "serialNumber": "SN-0007", "name": "AD-03", "model": "AgriRover S", "fleet": "Adana Field Ops", "startLatitude": 36.9750, "startLongitude": 35.3350, "deviceKey": "aa335bfe07fcd60e21f12233106672e7c52371e36bc870c0a95c470db161e087" },
+    { "serialNumber": "SN-0008", "name": "AD-04", "model": "AgriRover S", "fleet": "Adana Field Ops", "startLatitude": 37.0050, "startLongitude": 35.3150, "deviceKey": "84088c59ee583bde6ad939ff7f0818270d1a3490a548c63a69cce57e5ac7b7f0" }
+  ]
+}
