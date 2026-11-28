@@ -5,18 +5,23 @@ The four questions from the assignment, answered briefly. Detailed notes on indi
 
 ## 1. What would I ideally clarify?
 
-- **Who sees what:** is access granted per fleet, per vehicle, or per site/customer? Are there roles beyond "admin
-  sees all, operator sees assigned fleets" (e.g. read-only vs. can acknowledge alarms)?
-- **Identity:** is there an existing identity provider / SSO (Azure AD, Google Workspace, Keycloak) the app should use?
-- **How vehicles connect today:** protocol (HTTPS, MQTT, a vendor gateway), how often they report, network quality in
-  the field (gaps, buffering), and whether they have reliable clocks.
-- **What "offline" means operationally:** after how long without data, and should someone be alerted?
-- **Latency expectations:** is a few seconds fine, or is near-instant required?
-- **History:** how far back must history go, and are there retention or compliance rules for location data?
-- **Commands:** monitoring only, or will operators later send commands to vehicles (stop, return home)?
-- **Platforms and scale:** which phones/OS versions the team uses, how many vehicles and users to expect.
-- **Notifications:** do operators need push notifications for faults/low battery while the app is closed?
+I would ask these five questions first, because the answers change the design the most.
 
+- **Who can see which vehicles?** Is access per fleet, per vehicle, or per customer? Are there roles other than
+  "admin" and "operator"? This decides the permission model. I assumed access per fleet (A1, A2).
+- **How do the vehicles send data today?** Which protocol (HTTPS, MQTT, a vendor gateway), how often, and how
+  reliable is the network in the field? This decides how ingestion works. I assumed HTTPS with a key per vehicle
+  and one sample every few seconds (A3, A8).
+- **What does "offline" mean for the team?** After how long without data is a vehicle offline, and should someone be
+  alerted? I assumed 30 seconds and no alert (A5).
+- **Is the app only for monitoring?** If operators will also send commands (stop, return home), the system needs
+  a command channel and an audit log. I assumed monitoring only (A4).
+- **How long must history be kept?** Are there retention or privacy rules for location data? This decides how the
+  history table grows and when old data is deleted. I assumed it is kept indefinitely (A7).
+
+Smaller questions: Is there an existing login system (SSO) to use? Do operators need push notifications while the
+app is closed? Is a delay of a few seconds fine for live updates? Which phones and how many vehicles and users are
+expected?
 ## 2. Assumptions (and why)
 
 | # | Assumption | Why | If it's wrong |
