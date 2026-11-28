@@ -24,19 +24,21 @@ app is closed? Is a delay of a few seconds fine for live updates? Which phones a
 expected?
 ## 2. Assumptions (and why)
 
+Where I did not get an answer, I made these assumptions. Each one is easy to change, and the last column says how.
+
 | # | Assumption | Why | If it's wrong |
 |---|---|---|---|
-| A1 | Access is per **fleet** | Matches how field teams are organised; one rule to enforce | Swap the `UserFleetAccess` table for per-vehicle access; `IVehicleAccessService` stays the single place to change |
-| A2 | Two roles: Admin sees all, Operator sees assigned fleets; both **read-only** | Simplest model that shows real access control | Add roles/permissions to the token and the access service |
-| A3 | Tens of vehicles, one sample every ~2 s each | Typical small operation; easy to demo | For thousands: batch ingestion, partition telemetry, SignalR backplane |
-| A4 | Monitoring only, no commands | The assignment asks for monitoring | Add a command channel (likely MQTT) and an audit trail |
-| A5 | Offline = no data for **30 s**, decided by the server | One authoritative rule for every client | Change `Telemetry:OfflineThresholdSeconds` |
-| A6 | "Previous activity" = telemetry history + activity events | Covers both "where/how was it" and "what happened" | Add the missing event types |
-| A7 | History kept indefinitely | Fine for a demo | Retention job / time partitioning |
-| A8 | Vehicles push over HTTPS with a per-vehicle key | Simple, testable, works through most networks | MQTT broker in front, same ingestion service behind it |
-| A9 | No offline cache in the app; clear stale/disconnected states instead | Monitoring data is only useful when current | Cache the last snapshot locally |
-| A10 | A vehicle outside your fleets answers **404**, not 403 | Doesn't reveal that it exists | Change one line if the client prefers 403 |
-
+| A1 | Access is per **fleet** | Matches how field teams are organised; one rule to enforce | Replace the `UserFleetAccess` table with per-vehicle access. `IVehicleAccessService` is the only place that changes. |
+| A2 | Two roles: Admin sees all, Operator sees assigned fleets. Both are **read-only**. | Simplest model that still shows real access control | Add a permissions table; the access service reads it. |
+| A3 | Tens of vehicles, one sample every ~2 s each | A typical small operation, easy to demo | For thousands: batch ingestion, partition telemetry, add a SignalR backplane. |
+| A4 | Monitoring only, no commands | The assignment asks for monitoring | Add a command channel (likely MQTT) and an audit log. |
+| A5 | A vehicle is offline after **30 s** without data, decided by the server | One rule for every client | Change `Telemetry:OfflineThresholdSeconds`. For alerts, send the existing "went offline" event as a notification. |
+| A6 | "Previous activity" = telemetry history + activity events | Covers both "where was it" and "what happened" | Events are one enum with one rule each, so a new type is a small change. |
+| A7 | History is kept indefinitely | Fine for a demo | Add a retention job or time-based partitioning. |
+| A8 | Vehicles send data over HTTPS with their own key | Simple, testable, works through most networks | Put an MQTT broker in front; the ingestion service behind it stays the same. |
+| A9 | No offline cache in the app; it shows clear stale and disconnected states | Monitoring data is only useful when it is current | Cache the last snapshot on the phone and mark it as old. |
+| A10 | A vehicle outside your fleets answers **404**, not 403 | Does not reveal that the vehicle exists | Change one line if the client prefers 403. |
+| A11 | Login with email and password; the token lasts 60 minutes; no refresh token | Keeps authentication simple for a demo | Use the company's login system (SSO) and refresh tokens. |
 ## 3. Main components and why
 
 ```mermaid
@@ -50,58 +52,56 @@ flowchart LR
     APP -- JWT, REST snapshot --> REST[REST API] --> DB
 ```
 
-- **One ASP.NET Core API project, organised by feature folders.** The domain is small; extra layers/projects would add
-  indirection without making it more testable (the integration tests run the real HTTP pipeline anyway).
-- **PostgreSQL** for everything: relational data, telemetry history and the latest state. Durable across restarts,
-  real transactions, and the unique index on (vehicle, sequence) makes ingestion idempotent.
-- **Latest state on the vehicle row + a separate history table.** The list and map read one row per vehicle;
-  history queries use an index. Late samples go to history without overwriting the latest state.
-- **SignalR for real time** instead of polling (wasteful, slow), plain SSE (no built-in groups/reconnect in .NET +
-  Flutter) or MQTT to the phone (another broker and auth system). It works over WebSockets with fallbacks and reconnects.
-- **Server-side groups per fleet.** The server puts each connection in its fleets' groups from the same access rule as
-  REST; there is no way for a client to subscribe to another fleet.
-- **Every change is broadcast only after the database commit**, and the app orders updates per vehicle by a server
-  `updatedAt`, so a late REST snapshot can't undo a newer live update.
-- **The simulator is a separate process** that calls the same ingest endpoint a real vehicle would; stopping it
-  demonstrates offline detection.
-- **Flutter + Riverpod** for one codebase on iOS and Android with simple, testable state.
+- **One ASP.NET Core API project, organised by feature folders.** The domain is small. Extra projects and layers
+  would add indirection without making the code easier to test, because the integration tests already run the real
+  HTTP pipeline.
+- **PostgreSQL for everything.** Data survives restarts, writes are transactional, and a unique index on
+  (vehicle, sequence) makes ingestion idempotent: if a device sends the same sample twice, it is stored once.
+- **Latest state on the vehicle row, history in a separate table.** The list and the map read one row per vehicle,
+  which is fast. A sample that arrives late goes into the history but does not overwrite the latest state.
+- **SignalR for live updates.** Polling wastes requests and is slow. Server-Sent Events only send data one way, so I
+  would have to build groups, access control and reconnection myself. MQTT to the phone would need another broker and
+  another login system. SignalR uses WebSockets, falls back to other transports, and reconnects.
+- **Server-side groups per fleet.** The server decides which fleets a connection receives, using the same access rule
+  as the REST API. A client cannot ask for another fleet's updates.
+- **Changes are sent to phones only after the database commit.** Phones never see data that could still be rolled
+  back. Each vehicle also has a server-set `updatedAt`, and the app keeps the newest copy per vehicle. So a slow REST
+  response cannot overwrite a newer live update.
+- **The simulator is a separate process.** It calls the same ingest endpoint a real vehicle would. Stopping it shows
+  offline detection working.
+- **Flutter with Riverpod.** One codebase for iOS and Android, with simple state that is easy to test. It is also the
+  framework I know best.
 
 ## 4. What I left out or simplified
 
-| Left out | How I'd do it with more time |
+I kept the scope small on purpose. This is what I left out, and how I would add it with more time.
+
+| Left out | How I would do it |
 |---|---|
-| Commands to vehicles | Command endpoint + MQTT/command queue to devices, with acknowledgements and an audit log |
-| Refresh tokens | Short access token + rotating refresh token; the app refreshes silently instead of logging out after 60 min |
-| User / fleet management UI | Admin screens or reuse the company's identity provider and its groups |
-| Push notifications | FCM/APNs for faults and low battery, triggered by the same activity events |
-| Offline cache in the app | Store the last snapshot locally and show it, clearly marked as old |
-| Telemetry retention / partitioning | Time-partitioned table (or TimescaleDB), downsample old data, drop after N days |
-| Horizontal scaling | Several API instances behind a load balancer + SignalR backplane (e.g. Redis); migrations as a deploy step |
-| HTTPS / TLS | Terminate TLS at a reverse proxy / ingress; HSTS; no cleartext exceptions in the app |
-| Rate limiting beyond login | Per-device limits on ingest, per-user limits on the API, behind the proxy with forwarded IPs |
-| Device provisioning | Per-device keys issued at manufacturing/onboarding, rotation and revocation, stored in a secret store |
-| Map tiles | Commercial or self-hosted tile provider, URL in config, tile caching |
+| Commands to vehicles | A command endpoint and a queue to the devices, with acknowledgements and an audit log |
+| Refresh tokens | A short access token plus a rotating refresh token, so the app renews silently instead of logging out after 60 minutes |
+| User and fleet management screens | Admin screens, or use the company's login system and its groups |
+| Push notifications | FCM/APNs for faults and low battery, triggered by the existing activity events |
+| Offline cache in the app | Save the last snapshot on the phone and show it, clearly marked as old |
+| Telemetry retention | Time-partitioned tables (or TimescaleDB), downsample old data, delete after N days |
+| Running several API instances | A load balancer and a SignalR backplane (e.g. Redis); run migrations as a separate deploy step |
+| HTTPS, rate limits, device keys | TLS at a reverse proxy; rate limits per device and per user; keys issued per device and stored in a secret store |
+| Map tiles | A commercial or self-hosted tile provider, with the URL in config |
 
 ## Known limitations / incomplete
 
-- **Clock-based states depend on the phone's clock.** "Stale" and the session-expiry timer use the device time;
-  a badly wrong clock shows vehicles stale too early/late (the server's Offline status is not affected).
-- **Open real-time connections keep their groups.** REST checks the user and their current role on every request,
-  but a hub connection's fleet groups are decided when it connects: a removed fleet or a changed role applies to it on
-  the next (re)connect, and a **deleted user's already-open connection stays open until the token expires**
-  (≤ 60 min). New connections and reconnects of a deleted user are rejected (401), and the app then logs out.
-- **iOS keeps Keychain items when the app is uninstalled**, so a reinstalled app can start with an old token. That
-  token is accepted only if its user still exists; otherwise the first request or hub connect gets 401 and the app
-  shows login.
-- **Single API instance.** No SignalR backplane; startup migrations and seeding would race with several instances.
-- **History list shows every sample** of the last hour (~1800 rows); the chart averages per minute. No live append.
-- **A detail screen opened for a vehicle not in the list** (rare fallback path) doesn't update live.
-- **Rate-limit countdown is an upper bound** (the limiter reports its full window, not the time left).
-- **Mobile verified on simulators/emulators only** (iOS simulator and Android emulator), not on physical devices; a
-  physical device needs the API behind HTTPS.
-- **OSM public tiles** are for the demo only.
-- **No load or soak testing**; scale claims are assumptions (A3).
-
+- **Real-time connections keep their groups.** REST checks the user and their current role on every request. A
+  real-time connection decides its fleets only when it connects, so a changed role or removed fleet applies after the
+  next reconnect. A deleted user's open connection stays open until the token expires (at most 60 minutes), but they
+  cannot open a new one.
+- **Clock-based states use the phone's clock.** "Stale" and the session timer depend on it. A wrong clock shows
+  vehicles as stale too early or too late. The server's Offline status is not affected.
+- **iOS keeps stored tokens after the app is uninstalled.** A reinstalled app can start with an old token. The server
+  rejects it if the user no longer exists, and the app goes to the login screen.
+- **One API instance only.** Startup migrations and seeding would conflict if several instances started together.
+- **Tested on simulators and emulators, not on physical phones.** The app allows plain HTTP only for `localhost` and
+  the Android emulator address. A real phone needs the API behind HTTPS.
+- **No load testing.** The scale numbers in my assumptions (A3) are estimates, not measurements.
 ---
 
 ## Appendix: detailed decision notes
